@@ -1,0 +1,13 @@
+# Claude Code generated
+*.log
+*.cache
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
