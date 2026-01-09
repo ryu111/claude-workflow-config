@@ -329,6 +329,74 @@ Task(
    - 包含 "PASS" → 標記任務完成
    - 包含 "FAIL" → 呼叫 DEBUGGER
 
+---
+
+## ⚠️ 同步更新 tasks.md（關鍵！）
+
+**每個任務完成後必須立即更新 `tasks.md` 中的 checkbox！**
+
+這是為了：
+1. 追蹤進度
+2. 支援斷點恢復（新 AI 可以接手）
+3. 避免重複執行已完成的任務
+
+### 更新流程
+
+```
+任務完成（TESTER PASS）
+     ↓
+立即更新 openspec/changes/[change-id]/tasks.md：
+- [ ] 2.1 Create user API  →  - [x] 2.1 Create user API
+     ↓
+更新 Progress 區塊
+     ↓
+Git commit
+```
+
+### tasks.md Progress 區塊
+
+每次更新任務狀態時，同時更新 Progress：
+
+```markdown
+## Progress
+- Total: 8 tasks
+- Completed: 3        ← 更新這裡
+- Status: IN_PROGRESS ← 更新這裡
+
+---
+
+## 1. Foundation (sequential)
+- [x] 1.1 Setup database | files: src/db/index.ts
+- [x] 1.2 Create models | files: src/models/
+- [x] 1.3 Setup auth | files: src/auth/
+
+## 2. Core Features (parallel)
+- [ ] 2.1 User API | files: src/api/user.ts  ← 下一個任務
+- [ ] 2.2 Cart API | files: src/api/cart.ts
+```
+
+### Status 值
+
+| Status | 說明 |
+|--------|------|
+| `NOT_STARTED` | 尚未開始 |
+| `IN_PROGRESS` | 進行中 |
+| `COMPLETED` | 全部完成 |
+| `BLOCKED` | 被阻擋（需要協助） |
+
+### 斷點恢復
+
+當新 AI 接手時（`接手 [change-id]` 或 `工作流 [change-id]`）：
+
+```
+1. 讀取 tasks.md
+2. 解析 Progress 區塊了解整體狀態
+3. 掃描找到第一個 `- [ ]` 未完成任務
+4. 從該任務繼續執行 D→R→T
+```
+
+---
+
 ## 重試限制
 
 | 參數 | 值 | 說明 |

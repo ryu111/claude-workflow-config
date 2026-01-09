@@ -28,11 +28,24 @@
 
 **適用於任何模式（包括 plan mode），不受對話模式限制**
 
-| 關鍵字 | 動作 |
-|--------|------|
-| `規劃` | 啟動工作流（ARCHITECT → tasks.md） |
-| `loop` | 持續執行直到完成 |
-| `規劃 + loop` | 規劃後 Loop 執行所有任務 |
+| 關鍵字 | 動作 | 說明 |
+|--------|------|------|
+| `規劃 [feature]` | ARCHITECT 建立 OpenSpec | 從頭規劃，建立 proposal + tasks |
+| `接手 [change-id]` | 恢復現有工作流 | 讀取 tasks.md，從斷點繼續 |
+| `工作流 [change-id]` | 同上 | 恢復並執行 D→R→T |
+| `loop` | 持續執行直到完成 | 配合上述關鍵字使用 |
+
+### OpenSpec 目錄（專案內）
+
+```
+project/openspec/
+├── specs/          # 當前狀態（已實作）
+└── changes/        # 變更提議（待實作）
+    └── [change-id]/
+        ├── proposal.md
+        ├── tasks.md    # 帶 checkbox 追蹤進度
+        └── specs/
+```
 
 ### Single Agent
 
@@ -87,3 +100,130 @@
 ├── tester.md
 └── debugger.md
 ```
+
+---
+
+## Workflow Execution Rules（工作流執行規則）
+
+### 關鍵字觸發機制
+
+當用戶訊息包含以下關鍵字時，**必須**執行對應動作：
+
+| 關鍵字模式 | 執行動作 |
+|-----------|----------|
+| `規劃 [feature]` | ARCHITECT subagent 建立 OpenSpec（proposal + tasks） |
+| `接手 [change-id]` | 讀取 openspec/changes/[change-id]/tasks.md，從斷點繼續 |
+| `工作流 [change-id]` | 同上，恢復工作流執行 D→R→T |
+| `[任務] loop` | 使用 `/ralph-loop:ralph-loop` 持續執行 |
+| `規劃 [feature] loop` | ARCHITECT → OpenSpec → ralph-loop 執行所有任務 |
+
+### 斷點恢復流程
+
+當偵測到 `接手` 或 `工作流` 關鍵字時：
+
+```
+1. 讀取 openspec/changes/[change-id]/tasks.md
+2. 找到第一個 `- [ ]` 未完成任務
+3. 顯示恢復資訊
+4. 從該任務開始 D→R→T 循環
+5. 完成後更新 checkbox 並繼續
+```
+
+### D→R→T 循環（必須遵守）
+
+**每個任務必須經過完整的 DEVELOPER → REVIEWER → TESTER 循環**
+
+執行方式：**使用 Task 工具產生真正的 subagent**，不只是顯示 emoji 標示！
+
+```
+Per-Task Cycle:
+
+1. 💻 DEVELOPER (Task tool → subagent_type: developer)
+   ↓
+2. 🔍 REVIEWER (Task tool → subagent_type: reviewer)
+   │
+   ├── REJECT → 回到 DEVELOPER (retry++)
+   │            max_retries: 3
+   │
+   └── APPROVE → 進入 TESTER
+                 ↓
+3. 🧪 TESTER (Task tool → subagent_type: tester)
+   │
+   ├── FAIL → DEBUGGER (Task tool → subagent_type: debugger)
+   │          → 修復後回到 TESTER
+   │
+   └── PASS → ✅ 標記任務完成 → 更新 tasks.md checkbox
+```
+
+### ⚠️ 同步更新 tasks.md
+
+**每個任務完成後必須立即更新 checkbox！**
+
+```markdown
+# Before
+- [ ] 2.1 Create user API | files: src/api/user.ts
+
+# After (任務完成)
+- [x] 2.1 Create user API | files: src/api/user.ts
+```
+
+這是為了支援斷點恢復，讓新 AI 可以接手。
+
+### Task Tool 使用範例
+
+```
+# 正確：使用 Task 工具產生 subagent
+Task(subagent_type: "developer", prompt: "實作 Task 2.1 - 建立 AuthService...")
+Task(subagent_type: "reviewer", prompt: "審查 AuthService 程式碼...")
+Task(subagent_type: "tester", prompt: "執行 AuthService 單元測試...")
+
+# 錯誤：只顯示 emoji 標示，沒有產生 subagent
+💻 DEVELOPER: 實作 Task 2.1...（直接執行，未使用 Task 工具）
+```
+
+### Ralph-Loop 整合
+
+當用戶使用 `loop` 關鍵字時：
+
+1. **自動啟動** `/ralph-loop:ralph-loop`
+2. 每個 iteration 執行一個任務的完整 D→R→T 循環
+3. 使用 `--completion-promise` 設定完成條件
+4. 使用 `--max-iterations` 設定最大迭代次數
+
+範例：
+```bash
+/ralph-loop:ralph-loop 執行所有待處理任務 --completion-promise 'ALL TASKS COMPLETED' --max-iterations 30
+```
+
+### 工作流檢查清單
+
+Main Agent 在執行工作流時必須確認：
+
+- [ ] 是否偵測到 `規劃` 關鍵字？→ 產生 ARCHITECT subagent
+- [ ] 是否偵測到 `loop` 關鍵字？→ 啟動 ralph-loop
+- [ ] 每個任務是否執行完整 D→R→T？
+- [ ] 是否使用 Task 工具產生 subagent？（不只是 emoji）
+- [ ] REVIEWER 拒絕後是否重試？（max 3 次）
+- [ ] TESTER 失敗後是否呼叫 DEBUGGER？
+
+### 嚴格規定
+
+1. **禁止跳過 REVIEWER 或 TESTER**：即使任務看起來簡單
+2. **禁止只顯示 emoji**：必須實際使用 Task 工具
+3. **禁止手動完成任務**：必須經過 TESTER 確認
+4. **禁止無限重試**：max_retries = 3，超過則標記失敗並詢問用戶
+5. **任務完成後必須更新 checkbox**：支援斷點恢復
+6. **所有任務完成後必須歸檔**：`openspec archive [change-id] --yes`
+
+### 歸檔流程
+
+所有任務完成後：
+
+```bash
+openspec archive [change-id] --yes
+```
+
+歸檔後：
+- 變更移動到 `openspec/changes/archive/YYYY-MM-DD-[change-id]/`
+- `specs/` 自動更新
+- Git commit: `chore: archive [change-id]`
