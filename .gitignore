@@ -1,13 +1,25 @@
-# Claude Code generated
-*.log
-*.cache
+# Sensitive/Runtime files
+history.jsonl
+projects/
+debug/
+file-history/
+ide/
+cache/
+chrome/
+downloads/
+local/
+paste-cache/
+shell-snapshots/
+statsig/
+stats-cache.json
+security_warnings_state_*.json
+agent-flow.log
 
-# OS
-.DS_Store
-Thumbs.db
+# Plugins (may contain tokens)
+plugins/
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
+# Plans (temporary)
+plans/
+
+# Todos (session-specific)
+todos/
