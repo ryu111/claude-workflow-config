@@ -155,6 +155,11 @@ Per-Task Cycle:
 
 **每個任務完成後必須立即更新 checkbox！**
 
+**不論完成方式，都要更新：**
+- 走完整 D→R→T 循環 → 更新 checkbox
+- 簡單任務自己做完 → 也要更新 checkbox
+- 任何方式完成 → 都要更新 checkbox
+
 ```markdown
 # Before
 - [ ] 2.1 Create user API | files: src/api/user.ts
