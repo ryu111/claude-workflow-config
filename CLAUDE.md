@@ -234,3 +234,18 @@ openspec archive [change-id] --yes
 - 變更移動到 `openspec/changes/archive/YYYY-MM-DD-[change-id]/`
 - `specs/` 自動更新
 - Git commit: `chore: archive [change-id]`
+
+### Loop 清理（重要！）
+
+**工作流完成後必須明確關閉 loop，避免殘留狀態：**
+
+```bash
+# 完成後執行 cancel 確保乾淨關閉
+/ralph-loop:cancel-ralph
+```
+
+完整的結束流程：
+1. 所有任務完成 ✅
+2. `openspec archive [change-id] --yes`
+3. `/ralph-loop:cancel-ralph`（執行 1-2 次確保關閉）
+4. 輸出「✅ 工作流完成，loop 已關閉」
