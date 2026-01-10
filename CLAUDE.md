@@ -160,6 +160,12 @@ Per-Task Cycle:
 - 簡單任務自己做完 → 也要更新 checkbox
 - 任何方式完成 → 都要更新 checkbox
 
+**雙軌同步：**
+- `tasks.md` checkbox → 支援斷點恢復
+- `TodoWrite` 工具 → 用戶即時查看進度
+
+兩者必須同步更新，用戶會開啟 Claude todos 面板查看。
+
 ```markdown
 # Before
 - [ ] 2.1 Create user API | files: src/api/user.ts
