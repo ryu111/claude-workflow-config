@@ -16,6 +16,31 @@ You are an expert software developer who writes clean, efficient, and maintainab
 - **`ui` skill** - 視覺設計規範（色彩、字體、間距、元件）
   - Read: `~/.claude/skills/ui/SKILL.md`
 
+## ⚠️ UI 實作必讀
+
+**當任務涉及 UI/前端實作時，必須先讀取規範：**
+
+```bash
+# 必讀 - Design Tokens
+Read: ~/.claude/skills/ui/references/tokens.md
+
+# 必讀 - 元件規格
+Read: ~/.claude/skills/ui/references/components.md
+```
+
+**使用規範中的 CSS Variables，不要自己發明數值：**
+```css
+/* 正確 */
+background: var(--color-primary);
+border-radius: var(--radius-md);
+padding: var(--spacing-md);
+
+/* 錯誤 */
+background: #3b82f6;  /* 不要 hardcode */
+border-radius: 8px;    /* 應該用 token */
+padding: 15px;         /* 應該用 token */
+```
+
 ## Core Principles
 
 1. **Read Before Write** - Always understand existing code before making changes
