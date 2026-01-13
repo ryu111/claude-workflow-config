@@ -64,8 +64,8 @@ project/
 
 | Agent | Keywords | Role |
 |-------|----------|------|
-| ARCHITECT | 規劃, plan, design | 建立 OpenSpec proposal + tasks |
-| DESIGNER | UI, UX, 介面 | UI/UX 規格 |
+| ARCHITECT | 規劃, plan | 建立 OpenSpec proposal + tasks |
+| DESIGNER | 設計, design, UI, UX, 介面 | UI/UX 規格 |
 | DEVELOPER | 實作, implement | 寫程式碼 |
 | REVIEWER | 審查, review | 程式碼審查 |
 | TESTER | 測試, test | 執行測試 |
@@ -175,54 +175,21 @@ Main Agent 執行：
 
 ## Task Workflow (D→R→T)
 
-### Per-Task Cycle
-
 ```
 DEVELOPER → REVIEWER → TESTER
-               │
-        ┌──────┴──────┐
-     REJECT        APPROVE
-        ↓             ↓
-    DEVELOPER      TESTER
-    (retry++)         │
-               ┌──────┴──────┐
-             FAIL         PASS
-               ↓            ↓
-           DEBUGGER    Mark [x] ✓
-                          ↓
-                    Update tasks.md
+     │           │          │
+     │      REJECT → retry  │
+     │                 FAIL → DEBUGGER
+     └─────────────────────→ PASS → ✅ Update tasks.md
 ```
 
-### 同步更新 tasks.md
+**核心規則：**
+- 每個 D→R→T 必須使用 `Task(subagent_type: "xxx")` 產生 subagent
+- 禁止只顯示 emoji 而不產生 subagent
+- 任務完成後立即更新 `tasks.md` checkbox
 
-**重要**：每個任務完成後**立即**更新 `tasks.md`：
-
-```markdown
-# Before
-- [ ] 2.1 Create user API | files: src/api/user.ts
-
-# After (任務完成)
-- [x] 2.1 Create user API | files: src/api/user.ts
-```
-
-這樣如果中途斷掉，新的 AI 可以：
-1. 讀取 `tasks.md`
-2. 找到第一個 `- [ ]` 未完成的任務
-3. 從該任務繼續執行
-
-### ⚠️ 必須使用 Task 工具產生 Subagent
-
-每個 D→R→T 階段**必須**使用 Task 工具：
-
-```
-Task(subagent_type: "developer", prompt: "...")
-Task(subagent_type: "reviewer", prompt: "...")
-Task(subagent_type: "tester", prompt: "...")
-```
-
-**禁止**：只顯示 emoji 標示而不產生 subagent！
-
-For detailed phase rules, read `references/phases.md`.
+For detailed execution rules → read `references/execution.md`
+For phase rules → read `references/phases.md`
 
 ## Agent 工作標示
 

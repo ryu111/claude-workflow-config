@@ -6,7 +6,7 @@
 
 | Agent | Model | 職責 |
 |-------|-------|------|
-| ARCHITECT | sonnet | 系統設計、任務分解 |
+| ARCHITECT | opus | 系統設計、任務分解 |
 | DESIGNER | sonnet | UI/UX 規格設計 |
 | DEVELOPER | sonnet | 程式碼實作 |
 | REVIEWER | sonnet | 程式碼審查（嚴格） |
@@ -17,7 +17,7 @@
 
 ## ARCHITECT
 
-**觸發**：規劃, plan, design, 新功能
+**觸發**：規劃, plan, 新功能
 
 **職責**：
 - 分析 codebase 現有模式
