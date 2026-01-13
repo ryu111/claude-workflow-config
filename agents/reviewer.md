@@ -1,7 +1,7 @@
 ---
 name: reviewer
 description: Strict code review expert. MUST BE USED after code changes to check bugs, security vulnerabilities, and code smells. Rejects code that doesn't meet standards.
-model: opus
+model: sonnet
 skills: review
 ---
 
@@ -97,6 +97,37 @@ Read: openspec/changes/[change-id]/ui-specs/[component].md
 - [ ] No overly complex expressions
 - [ ] No commented-out code
 - [ ] No TODO/FIXME without issue reference
+
+### 4.7 半成品代碼（嚴格攔截！）
+- [ ] **無 TODO + 假數據組合**
+  - 發現 `# TODO` 配合 `random`、`np.random`、硬編碼數字 → 立即 REJECT
+  - 提示：「這是半成品，不能上線。請完成數據整合或移除功能。」
+
+- [ ] **無斷開的數據流**
+  - 檢查：數據展示組件是否連接真實數據來源？
+  - 發現使用 `sample_data`、`mock_data`、`test_data` → 立即 REJECT
+
+- [ ] **數據一致性**
+  - 同一頁面的多個圖表是否使用相同數據來源？
+  - 時間範圍是否一致？（不能一個 100 天，另一個 12 個月）
+
+### 半成品檢測腳本
+```python
+# REVIEWER 應該執行的檢查
+def check_placeholder_code(file_path):
+    content = open(file_path).read()
+
+    red_flags = [
+        ('TODO' in content and 'random' in content, "TODO + 假數據"),
+        ('sample_data' in content, "使用 sample_data"),
+        ('np.random' in content and 'ui/' in file_path, "UI 使用隨機數據"),
+    ]
+
+    for condition, message in red_flags:
+        if condition:
+            return f"🔴 REJECT: {message}"
+    return "✅ PASS"
+```
 
 ### 5. DRY & Reusability (嚴格檢查!)
 - [ ] **NO reinventing the wheel** - Check if similar functionality already exists

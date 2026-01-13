@@ -9,6 +9,78 @@
             "command": "/Users/sbu/.claude/hooks/inject-skills.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/hooks/core/session-start.js\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/hooks/core/session-end.js\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "mcp__",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/hooks/core/permission-request.js\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/hooks/core/mid-conversation.js\"",
+            "timeout": 8
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matchers": [
+          "Edit",
+          "Write",
+          "Bash"
+        ],
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/hooks/core/auto-capture-hook.js\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matchers": [
+          "Edit",
+          "Write"
+        ],
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/remind-review.sh",
+            "timeout": 2
+          }
+        ]
       }
     ]
   },

@@ -89,6 +89,76 @@ ARCHITECT 執行：
 3. 等待用戶審核
 ```
 
+### Mode 1.5: ⚡ 並行任務分配（規劃後、執行前）
+
+**規劃完成後，執行前必須分析任務依賴並分配並行批次！**
+
+```
+tasks.md 完成
+     ↓
+分析任務依賴關係
+     ↓
+分配 Phase Batches（可並行的任務群組）
+     ↓
+使用 TodoWrite 建立 phase todos
+     ↓
+開始執行
+```
+
+#### 依賴分析規則
+
+| 依賴類型 | 判斷依據 | 處理方式 |
+|----------|----------|----------|
+| **無依賴** | 不同檔案、不同模組 | ✅ 可並行 |
+| **檔案依賴** | Task B 需要 Task A 產出的檔案 | 🔗 串行 |
+| **介面依賴** | Task B 使用 Task A 定義的 API | 🔗 串行 |
+| **測試依賴** | 測試需要對應功能完成 | 🔗 串行 |
+
+#### 分配範例
+
+```markdown
+# tasks.md 原始任務
+- [ ] 1.1 建立 UserService | files: src/services/user.ts
+- [ ] 1.2 建立 AuthService | files: src/services/auth.ts
+- [ ] 1.3 建立 UserAPI | files: src/api/user.ts (依賴 1.1)
+- [ ] 2.1 建立 PaymentService | files: src/services/payment.ts
+- [ ] 2.2 建立 PaymentAPI | files: src/api/payment.ts (依賴 2.1)
+
+# 分析後的 Phase Batches
+Phase 1 (並行): [1.1, 1.2, 2.1]  ← 無依賴，可同時執行
+Phase 2 (並行): [1.3, 2.2]       ← 依賴 Phase 1，可同時執行
+```
+
+#### TodoWrite 格式
+
+```python
+TodoWrite([
+    # Phase 1 - 並行執行
+    {"content": "Phase 1: 基礎 Services (1.1, 1.2, 2.1)", "status": "pending"},
+    {"content": "  └─ 1.1 UserService", "status": "pending"},
+    {"content": "  └─ 1.2 AuthService", "status": "pending"},
+    {"content": "  └─ 2.1 PaymentService", "status": "pending"},
+    # Phase 2 - 依賴 Phase 1
+    {"content": "Phase 2: API 層 (1.3, 2.2)", "status": "pending"},
+    {"content": "  └─ 1.3 UserAPI", "status": "pending"},
+    {"content": "  └─ 2.2 PaymentAPI", "status": "pending"},
+])
+```
+
+#### 並行執行方式
+
+```python
+# Phase 內的任務並行啟動多個 Task subagent
+Task(subagent_type: "developer", prompt: "實作 Task 1.1...")  }
+Task(subagent_type: "developer", prompt: "實作 Task 1.2...")  } 同時發送
+Task(subagent_type: "developer", prompt: "實作 Task 2.1...")  }
+
+# 等待所有 Phase 1 完成後
+# 再並行啟動 Phase 2
+Task(subagent_type: "developer", prompt: "實作 Task 1.3...")  }
+Task(subagent_type: "developer", prompt: "實作 Task 2.2...")  } 同時發送
+```
+
 ### Mode 2: 接手/工作流（恢復執行）
 
 ```
@@ -96,9 +166,11 @@ ARCHITECT 執行：
      ↓
 Main Agent 執行：
 1. 讀取 openspec/changes/[change-id]/tasks.md
-2. 找到第一個未完成的任務 `- [ ]`
-3. 從該任務繼續 D→R→T 循環
-4. 完成後更新 `- [ ]` → `- [x]`
+2. 分析任務依賴，分配 Phase Batches
+3. 使用 TodoWrite 建立 phase todos
+4. 找到第一個未完成的 Phase
+5. 並行執行 Phase 內所有任務的 D→R→T
+6. Phase 完成後進入下一個 Phase
 ```
 
 ## Task Workflow (D→R→T)
@@ -217,6 +289,96 @@ Git commit: "chore: archive [change-id]"
 - [ ] 執行 `openspec archive [change-id] --yes`
 - [ ] 驗證 specs/ 已更新
 
+## 🧹 清理流程（Cleanup）
+
+**歸檔後必須執行清理**，釋放空間並整理專案結構。
+
+### 快速清理命令
+
+```bash
+# 刪除快取和臨時檔案
+find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null; \
+find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null; \
+find . -type f -name "*.pyc" -delete 2>/dev/null; \
+rm -rf .playwright-mcp/ htmlcov/ .coverage 2>/dev/null
+```
+
+### 清理分類
+
+| 類型 | 處理 | 範例 |
+|------|------|------|
+| **刪除** | 快取、臨時檔 | `__pycache__/`, `.pytest_cache/`, `*.pyc` |
+| **歸檔** | 報告、舊文檔 | `TASK_*.md` → `docs/archive/task-reports/` |
+| **保留** | 原始碼、配置 | `src/`, `tests/`, `*.py` |
+
+For complete cleanup rules → read `references/cleanup.md`
+
+### 完整結束流程
+
+```
+1. 所有任務完成 ✅
+2. openspec archive [change-id] --yes
+3. 🧹 執行清理（參考 references/cleanup.md）
+4. 📝 檢查開發筆記（參考 references/dev-notes.md）
+5. /ralph-loop:cancel-ralph
+6. 輸出最終報告（含筆記提醒）
+7. 輸出「✅ 工作流完成，專案已清理」
+```
+
+## 📝 開發筆記（Dev Notes）
+
+**執行過程中想到但不需當下處理的事項，統一記錄到專案筆記本！**
+
+### 筆記本位置
+
+```
+project/
+└── openspec/
+    └── changes/
+        └── [change-id]/
+            └── notes.md    ← 開發筆記本
+```
+
+### 記錄時機
+
+| 情況 | 範例 | 處理 |
+|------|------|------|
+| 發現可優化但非必要 | 「這個函數可以重構」 | 📝 記錄 |
+| 想到相關功能 | 「未來可以加入 X 功能」 | 📝 記錄 |
+| 技術債 | 「這裡用 workaround，之後要改」 | 📝 記錄 |
+| 文檔待補 | 「需要補充 API 文檔」 | 📝 記錄 |
+| 測試待加 | 「邊界情況需要更多測試」 | 📝 記錄 |
+
+### 記錄格式
+
+```markdown
+# 開發筆記 - [change-id]
+
+## 優化建議
+- [ ] src/api/user.ts:45 - 可以用 memoization 優化
+- [ ] src/services/auth.ts - 錯誤處理可以更細緻
+
+## 未來功能
+- [ ] 加入批次處理 API
+- [ ] 支援多語言
+
+## 技術債
+- [ ] src/utils/helper.ts - 臨時解法，需要重構
+
+## 文檔待補
+- [ ] API 文檔需要範例
+- [ ] 部署流程文檔
+```
+
+### 結束時提醒
+
+工作流結束時，必須：
+1. 讀取 `notes.md`
+2. 在最終報告中列出所有筆記
+3. 詢問用戶是否要處理或保留
+
+For complete dev notes guide → read `references/dev-notes.md`
+
 ## Change ID 命名規則
 
 **重要**：Change ID 必須使用**英文 kebab-case**
@@ -276,6 +438,15 @@ add_user_auth         # 不能用底線
 
 ## Next Steps
 
+### Detailed Rules (from CLAUDE.md refactor)
+- For execution rules → read `references/execution.md`
+- For enforcement rules → read `references/enforcement.md`
+- For tech debt cleanup → read `references/tech-debt.md`
+- For parallelization → read `references/parallelization.md`
+
+### Other References
 - For agent details → read `references/agents.md`
 - For phase execution rules → read `references/phases.md`
+- For cleanup rules → read `references/cleanup.md`
+- For dev notes guide → read `references/dev-notes.md`
 - For task templates → see `templates/`

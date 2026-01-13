@@ -16,189 +16,86 @@
 
 # Global Claude Code Configuration
 
-## Language
-
-**預設語言：繁體中文**
-
-- 回覆內容使用繁體中文
-- **Thinking 內容也使用繁體中文**（方便用戶檢視理解是否正確）
-- 技術術語可保留英文（如 API、function、class）
-- 程式碼註解可用英文或中文
-- 除非使用者用其他語言提問
-
-## Parallelization（並行處理）
-
-**預設行為：最大化並行**
-
-無依賴的操作必須同時執行：
-- 讀取多個檔案 → 一次發送多個 Read
-- 搜尋多個模式 → 一次發送多個 Grep/Glob
-- 建立多個檔案 → 一次發送多個 Write
-- 啟動多個 subagent → 一次發送多個 Task
-
-只有當操作之間有依賴（如 Read → Edit 同一檔案）才串行。
-
-### ⚡ 並行化自我檢查（每次操作前必讀）
+## ⛔ 核心規則（必記！）
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│  串行 = 浪費時間！並行 = 效率最大化！                      │
-└────────────────────────────────────────────────────────────┘
-
-每次執行工具前問自己：
-□ 我接下來要執行幾個操作？
-□ 這些操作之間有依賴關係嗎？
-□ 如果沒有依賴，我是否可以一次發送多個工具呼叫？
-```
-
-### 並行化範例
-
-```python
-# ❌ 錯誤：串行執行無依賴操作
-Read("file1.py")        # 等待...
-Read("file2.py")        # 等待...
-Read("file3.py")        # 等待...
-# 總時間 = T1 + T2 + T3
-
-# ✅ 正確：並行執行無依賴操作
-Read("file1.py")  }
-Read("file2.py")  } 同一個訊息，一次發送
-Read("file3.py")  }
-# 總時間 = max(T1, T2, T3)
-```
-
-### 並行化決策表
-
-| 操作類型 | 有依賴？ | 處理方式 |
-|----------|----------|----------|
-| 讀取多個不同檔案 | ❌ 無 | **並行** |
-| 搜尋多個不同模式 | ❌ 無 | **並行** |
-| 建立多個不同檔案 | ❌ 無 | **並行** |
-| 多個獨立任務的 D→R→T | ❌ 無 | **並行啟動多個 Task** |
-| Read → Edit 同一檔案 | ✅ 有 | 串行 |
-| Write → Bash 執行該檔案 | ✅ 有 | 串行 |
-| Task A 的輸出是 Task B 的輸入 | ✅ 有 | 串行 |
-
-### 並行化紅線規則
-
-> **發現自己正在串行執行無依賴操作 = 違規！**
-
-如果發現自己：
-1. **連續發送多個 Read 讀取不同檔案** → 停止！改為一次發送
-2. **連續發送多個 Grep 搜尋不同模式** → 停止！改為一次發送
-3. **連續發送多個 Write 建立不同檔案** → 停止！改為一次發送
-4. **串行執行多個獨立任務的 D→R→T** → 停止！考慮並行啟動
-
-### Session 結束時的並行化統計
-
-```
-📊 並行化效率報告：
-- 並行執行的操作組：X 組
-- 本應並行但串行的操作：Y 組（應該是 0）
-- 並行化合規率：Z%
-```
-
-## Quick Reference
-
-### ⛔ 最重要的規則（每次都要記得！）
-
-```
-┌────────────────────────────────────────────────────────────┐
-│  任何修改 = 必須經過 R→T                                   │
+│  任何程式碼修改 = 必須經過 R→T                             │
 │  沒有例外！沒有捷徑！「簡單」不是跳過的理由！              │
 └────────────────────────────────────────────────────────────┘
-
-三種合法路徑：
-
-1. Main → R → T    （Main agent 直接修復）
-2. Design → R → T  （Designer 產出設計後實作）
-3. D → R → T       （Developer 開發）
-
-所有路徑都必須經過 R（審查）和 T（測試）！
 
 D = Task(subagent_type: "developer")  → 寫程式碼
 R = Task(subagent_type: "reviewer")   → 審查程式碼
 T = Task(subagent_type: "tester")     → 測試程式碼
 
-直接用 Edit/Write 寫程式碼後不經過 R→T = 違規！
-只顯示 emoji 不呼叫 Task = 違規！
-跳過 R 或 T = 違規！
+三種合法路徑（都必須經過 R→T）：
+1. Main → R → T    （Main agent 直接修復）
+2. Design → R → T  （Designer 設計後實作）
+3. D → R → T       （Developer 開發）
 ```
+
+## Language
+
+- 預設語言：**繁體中文**（包含 Thinking）
+- 技術術語可保留英文
+- 除非使用者用其他語言提問
+
+## 🔧 Meta Rules（元規則）
+
+### 規則強化原則
+
+**未來要強調任何規則時，必須優先使用 Hooks 保障執行，而不是在 CLAUDE.md 重複寫。**
+
+```
+想強調規則？
+    ↓
+❌ 在 CLAUDE.md 重複寫 → 文件膨脹、效果遞減
+✅ 設計 Hook 自動提醒 → 機制保障、精簡文件
+```
+
+### 工作流規則自動分類
+
+**所有工作流相關的詳細規則，自動歸類到 `workflow` skill：**
+
+| 內容類型 | 存放位置 |
+|----------|----------|
+| 執行規則 | `workflow/references/execution.md` |
+| 強制規則 | `workflow/references/enforcement.md` |
+| 技術債清理 | `workflow/references/tech-debt.md` |
+| 並行化規則 | `workflow/references/parallelization.md` |
+
+**CLAUDE.md 只保留核心規則和快速參考。**
+
+## Quick Reference
 
 ### Trigger Keywords
 
-**適用於任何模式（包括 plan mode），不受對話模式限制**
-
-| 關鍵字 | 動作 | 說明 |
-|--------|------|------|
-| `規劃 [feature]` | ARCHITECT 建立 OpenSpec | 從頭規劃，建立 proposal + tasks |
-| `接手 [change-id]` | 恢復現有工作流 | 讀取 tasks.md，從斷點繼續 |
-| `工作流 [change-id]` | 同上 | 恢復並執行 D→R→T |
-| `loop` | 持續執行直到完成 | 配合上述關鍵字使用 |
-
-### OpenSpec 目錄（專案內）
-
-```
-project/openspec/
-├── specs/          # 當前狀態（已實作）
-└── changes/        # 變更提議（待實作）
-    └── [change-id]/
-        ├── proposal.md
-        ├── tasks.md    # 帶 checkbox 追蹤進度
-        └── specs/
-```
+| 關鍵字 | 動作 |
+|--------|------|
+| `規劃 [feature]` | ARCHITECT 建立 OpenSpec |
+| `接手/工作流 [change-id]` | 從斷點恢復執行 |
+| `loop` | 持續執行直到完成 |
 
 ### Single Agent
 
 | 關鍵字 | Agent |
 |--------|-------|
-| 規劃, plan | ARCHITECT |
-| 設計, design, UI, UX, 介面 | DESIGNER |
-| 實作, implement | DEVELOPER |
-| 審查, review | REVIEWER |
-| 測試, test | TESTER |
-| debug, 除錯 | DEBUGGER |
+| 規劃, plan | 🏗️ ARCHITECT |
+| 設計, design, UI, UX, 介面 | 🎨 DESIGNER |
+| 實作, implement | 💻 DEVELOPER |
+| 審查, review | 🔍 REVIEWER |
+| 測試, test | 🧪 TESTER |
+| debug, 除錯 | 🐛 DEBUGGER |
 
-### Agent 工作標示
-
-切換 agent 時輸出標示：
-
-```
-🏗️ ARCHITECT: [描述]
-🎨 DESIGNER: [描述]
-💻 DEVELOPER: [描述]
-🔍 REVIEWER: [描述]
-🧪 TESTER: [描述]
-🐛 DEBUGGER: [描述]
-✅ 完成
-```
-
-### ⚠️ Subagent 角色說明（重要！）
+### Subagent 角色說明
 
 **D→R→T 規則是給 Main Agent 的，不是給 Subagent 的！**
 
-當你被 `Task(subagent_type: "XXX")` 呼叫時，你就是那個角色：
-
-| 如果你被呼叫為 | 你就是 | 你應該做 | 你不應該做 |
-|---------------|--------|----------|-----------|
-| `subagent_type: "developer"` | DEVELOPER | 直接寫程式碼 | 再呼叫 Task(developer) |
-| `subagent_type: "reviewer"` | REVIEWER | 直接審查程式碼 | 再呼叫 Task(reviewer) |
-| `subagent_type: "tester"` | TESTER | 直接寫測試並執行 | 再呼叫 Task(tester) |
-| `subagent_type: "debugger"` | DEBUGGER | 直接除錯 | 再呼叫 Task(debugger) |
-| `subagent_type: "designer"` | DESIGNER | 直接設計 | 再呼叫 Task(designer) |
-| `subagent_type: "architect"` | ARCHITECT | 直接規劃 | 再呼叫 Task(architect) |
-
-**判斷方式：**
-- 如果 prompt 開頭說「你就是 XXX subagent」→ 你是 subagent，直接執行
-- 如果用戶直接對你說話（沒有 subagent 上下文）→ 你是 Main Agent，遵守 D→R→T
-
-**Subagent 的職責：**
-- DEVELOPER：讀取需求，寫程式碼，回報完成（不需要審查自己）
-- REVIEWER：讀取程式碼，審查，給出 APPROVE 或 REJECT
-- TESTER：寫測試，執行測試，回報 PASS 或 FAIL
-- DEBUGGER：分析問題，修復，回報結果
-
-**記住：Main Agent 會在你完成後呼叫下一個角色（R→T），你不需要管！**
+| 被呼叫為 | 你應該做 | 你不應該做 |
+|----------|----------|-----------|
+| `developer` | 直接寫程式碼 | 再呼叫 Task(developer) |
+| `reviewer` | 直接審查 | 再呼叫 Task(reviewer) |
+| `tester` | 直接測試 | 再呼叫 Task(tester) |
 
 ## Available Skills
 
@@ -206,22 +103,20 @@ project/openspec/
 
 | Skill | Agent | 用途 |
 |-------|-------|------|
-| **dev** | DEVELOPER | Clean Code、設計模式、安全實踐、效能優化 |
-| **review** | REVIEWER | Code Smells、OWASP Top 10、SOLID 原則 |
-| **testing** | TESTER | 測試金字塔、邊界測試、Mock 最佳實踐 |
-| **ui** | DESIGNER | 視覺設計規範（色彩、字體、間距、元件） |
-| **ux** | DESIGNER | 使用者體驗規範（心理學、互動模式） |
-| **playwright** | TESTER/DEBUGGER | 瀏覽器自動化測試與除錯 |
+| **dev** | DEVELOPER | Clean Code、設計模式、安全、效能 |
+| **review** | REVIEWER | Code Smells、OWASP、SOLID |
+| **testing** | TESTER | 測試策略、Mock、邊界測試 |
+| **ui** | DESIGNER | 視覺設計規範 |
+| **ux** | DESIGNER | 使用者體驗規範 |
+| **playwright** | TESTER/DEBUGGER | 瀏覽器自動化 |
 
 ### 系統 Skills
 
 | Skill | 用途 |
 |-------|------|
-| **workflow** | 完整工作流說明（含清理流程） |
+| **workflow** | 完整工作流（含詳細規則） |
 | **skill-creator** | 建立 Skills 指南 |
 | **hooks-guide** | Hooks 配置指南 |
-
-> 清理規則已整合至 workflow skill → `references/cleanup.md`
 
 ## Workflow Limits
 
@@ -234,504 +129,24 @@ project/openspec/
 
 ```
 ~/.claude/agents/
-├── architect.md
-├── designer.md
-├── developer.md
-├── reviewer.md
-├── tester.md
-└── debugger.md
+├── architect.md    ├── developer.md    ├── tester.md
+├── designer.md     ├── reviewer.md     └── debugger.md
 ```
 
----
+## 並行化原則
 
-## Workflow Execution Rules（工作流執行規則）
+**無依賴的操作必須同時執行**
 
-### 關鍵字觸發機制
+| 操作 | 處理 |
+|------|------|
+| 讀取多個不同檔案 | **並行** |
+| 搜尋多個不同模式 | **並行** |
+| 多個獨立 D→R→T | **並行啟動** |
+| Read → Edit 同一檔案 | 串行 |
 
-當用戶訊息包含以下關鍵字時，**必須**執行對應動作：
+詳細規則 → `workflow/references/parallelization.md`
 
-| 關鍵字模式 | 執行動作 |
-|-----------|----------|
-| `規劃 [feature]` | ARCHITECT subagent 建立 OpenSpec（proposal + tasks） |
-| `接手 [change-id]` | 讀取 openspec/changes/[change-id]/tasks.md，從斷點繼續 |
-| `工作流 [change-id]` | 同上，恢復工作流執行 D→R→T |
-| `[任務] loop` | 使用 `/ralph-loop:ralph-loop` 持續執行 |
-| `規劃 [feature] loop` | ARCHITECT → OpenSpec → ralph-loop 執行所有任務 |
-
-### ⚡ 並行任務分配（執行前必做）
-
-**規劃完成後、執行前，必須分析任務依賴並分配 Phase Batches！**
-
-```
-tasks.md 完成
-     ↓
-分析任務依賴關係（檔案依賴、介面依賴）
-     ↓
-分配 Phase Batches（可並行的任務群組）
-     ↓
-使用 TodoWrite 建立 phase todos
-     ↓
-按 Phase 並行執行
-```
-
-**Phase 內的任務並行啟動：**
-```python
-# 同一個訊息發送多個 Task
-Task(subagent_type: "developer", prompt: "Task 1.1...")  }
-Task(subagent_type: "developer", prompt: "Task 1.2...")  } 並行
-Task(subagent_type: "developer", prompt: "Task 2.1...")  }
-```
-
-詳細規則 → workflow skill `references/phases.md`
-
-### 斷點恢復流程
-
-當偵測到 `接手` 或 `工作流` 關鍵字時：
-
-```
-1. 讀取 openspec/changes/[change-id]/tasks.md
-2. 分析任務依賴，分配 Phase Batches
-3. 使用 TodoWrite 建立 phase todos
-4. 找到第一個未完成的 Phase
-5. 並行執行 Phase 內所有任務的 D→R→T
-6. Phase 完成後進入下一個 Phase
-```
-
-### 任務執行循環
-
-**所有修改都必須經過 R→T，沒有例外！**
-
-#### 三種合法路徑
-
-```
-1. Main → R → T    （Main agent 直接修復簡單問題）
-2. Design → R → T  （Designer 產出設計 + 實作後審查測試）
-3. D → R → T       （Developer 開發後審查測試）
-```
-
-#### 一般任務：D→R→T
-```
-1. 💻 DEVELOPER → 2. 🔍 REVIEWER → 3. 🧪 TESTER → ✅
-```
-
-#### UI 任務：Design→R→T
-```
-0. 🎨 DESIGNER (產出設計規格 + 實作)
-   ↓
-1. 🔍 REVIEWER (審查設計與實作)
-   ↓
-2. 🧪 TESTER (測試功能) → ✅
-```
-
-#### Main 直接修復：Main→R→T
-```
-0. 🔧 MAIN (直接用 Edit 修復簡單問題)
-   ↓
-1. 🔍 REVIEWER (審查修復)
-   ↓
-2. 🧪 TESTER (測試修復) → ✅
-```
-
-**核心原則：**
-- **所有產出都需要 R→T**，無論來源是 Main、Designer 或 Developer
-- 即使是「簡單修復」也必須經過審查和測試
-- 跳過 R 或 T = 違規！
-
-**如何判斷路徑？**
-- 簡單 bug 修復 → Main → R → T
-- UI/設計相關 → Design → R → T
-- 功能開發 → D → R → T
-
-執行方式：**使用 Task 工具產生真正的 subagent**，不只是顯示 emoji 標示！
-
-```
-Per-Task Cycle (完整版):
-
-0. 🎨 DESIGNER (如果是 UI 任務)
-   │  - 讀取 tokens.md 和 components.md
-   │  - 產出設計規格
-   │  - 存到：openspec/changes/[change-id]/ui-specs/[component].md
-   ↓
-1. 💻 DEVELOPER (Task tool → subagent_type: developer)
-   │  - 讀取：openspec/changes/[change-id]/ui-specs/[component].md
-   │  - 根據設計規格實作
-   │  - 必須使用 CSS variables，不能 hardcode
-   ↓
-2. 🔍 REVIEWER (Task tool → subagent_type: reviewer)
-   │
-   ├── REJECT → 回到 DEVELOPER (retry++)
-   │            max_retries: 3
-   │
-   └── APPROVE → 進入 TESTER
-                 ↓
-3. 🧪 TESTER (Task tool → subagent_type: tester)
-   │
-   ├── FAIL → DEBUGGER (Task tool → subagent_type: debugger)
-   │          → 修復後回到 TESTER
-   │
-   └── PASS → ✅ 標記任務完成 → 更新 tasks.md checkbox
-```
-
-### ⚠️ 同步更新 tasks.md
-
-**每個任務完成後必須立即更新 checkbox！**
-
-**不論哪種路徑，都要更新：**
-- Main → R → T 完成 → 更新 checkbox
-- Design → R → T 完成 → 更新 checkbox
-- D → R → T 完成 → 更新 checkbox
-- 任何路徑完成 → 都要更新 checkbox
-
-**雙軌同步：**
-- `tasks.md` checkbox → 支援斷點恢復
-- `TodoWrite` 工具 → 用戶即時查看進度
-
-兩者必須同步更新，用戶會開啟 Claude todos 面板查看。
-
-```markdown
-# Before
-- [ ] 2.1 Create user API | files: src/api/user.ts
-
-# After (任務完成)
-- [x] 2.1 Create user API | files: src/api/user.ts
-```
-
-這是為了支援斷點恢復，讓新 AI 可以接手。
-
-### Task Tool 使用範例
-
-```
-# 正確：使用 Task 工具產生 subagent
-Task(subagent_type: "developer", prompt: "實作 Task 2.1 - 建立 AuthService...")
-Task(subagent_type: "reviewer", prompt: "審查 AuthService 程式碼...")
-Task(subagent_type: "tester", prompt: "執行 AuthService 單元測試...")
-
-# 錯誤：只顯示 emoji 標示，沒有產生 subagent
-💻 DEVELOPER: 實作 Task 2.1...（直接執行，未使用 Task 工具）
-```
-
-### Ralph-Loop 整合
-
-當用戶使用 `loop` 關鍵字時：
-
-1. **自動啟動** `/ralph-loop:ralph-loop`
-2. 每個 iteration 執行一個任務的完整 D→R→T 循環
-3. 使用 `--completion-promise` 設定完成條件
-4. 使用 `--max-iterations` 設定最大迭代次數
-
-範例：
-```bash
-/ralph-loop:ralph-loop 執行所有待處理任務 --completion-promise 'ALL TASKS COMPLETED' --max-iterations 30
-```
-
-### 工作流檢查清單
-
-Main Agent 在執行工作流時必須確認：
-
-- [ ] 是否偵測到 `規劃` 關鍵字？→ 產生 ARCHITECT subagent
-- [ ] 是否偵測到 `loop` 關鍵字？→ 啟動 ralph-loop
-- [ ] 每個任務是否執行完整 D→R→T？
-- [ ] 是否使用 Task 工具產生 subagent？（不只是 emoji）
-- [ ] REVIEWER 拒絕後是否重試？（max 3 次）
-- [ ] TESTER 失敗後是否呼叫 DEBUGGER？
-
-### 🐛 DEBUGGER 動態升級
-
-**TESTER 失敗時，根據情況選擇 DEBUGGER model：**
-
-```
-TESTER FAIL
-    ↓
-第幾次失敗？
-    │
-    ├── 第 1 次 → Task(subagent_type: "debugger")  # 預設 sonnet
-    │
-    ├── 第 2 次 → Task(subagent_type: "debugger", model: "opus")  # 升級
-    │
-    └── 第 3 次 → 暫停，詢問用戶是否繼續
-```
-
-**升級觸發條件：**
-- 連續失敗 2+ 次（同一問題）
-- 錯誤涉及多模組交互
-- 用戶明確要求「深度分析」
-
-### 🔄 失敗智能分析
-
-**連續失敗時，分析失敗模式：**
-
-| 失敗次數 | 分析 | 動作 |
-|----------|------|------|
-| 1 | - | 正常重試 |
-| 2 | 比較兩次錯誤是否相同 | 相同 → 升級 DEBUGGER；不同 → 可能是不穩定 |
-| 3 | 判斷是否為架構問題 | 相同錯誤 → 通知 ARCHITECT；不同 → 暫停詢問用戶 |
-
-```
-# 失敗分析邏輯
-if fail_count == 2:
-    if error_1 == error_2:
-        # 升級到 Opus DEBUGGER
-        Task(subagent_type: "debugger", model: "opus")
-    else:
-        # 可能是 flaky test，再試一次
-        Task(subagent_type: "debugger")
-
-if fail_count == 3:
-    if all_errors_same:
-        # 架構問題，需要 ARCHITECT 介入
-        "⚠️ 連續 3 次相同錯誤，可能是架構問題，建議重新規劃"
-    else:
-        # 詢問用戶
-        "⚠️ 連續 3 次不同錯誤，請確認是否繼續"
-```
-
-### 嚴格規定
-
-1. **禁止跳過 REVIEWER 或 TESTER**：即使任務看起來簡單
-2. **禁止只顯示 emoji**：必須實際使用 Task 工具
-3. **禁止手動完成任務**：必須經過 TESTER 確認
-4. **禁止無限重試**：max_retries = 3，超過則標記失敗並詢問用戶
-5. **任務完成後必須更新 checkbox**：支援斷點恢復
-6. **所有任務完成後必須歸檔**：`openspec archive [change-id] --yes`
-
----
-
-## 🔧 技術債清理原則（Technical Debt Cleanup）
-
-### 核心原則
-
-> **發現錯誤就要修正，不管是不是本次任務範圍！**
-
-```
-┌────────────────────────────────────────────────────────────┐
-│  有機會清理技術債 = 重要的工作                            │
-│  不要等到「以後」，以後永遠不會來！                       │
-└────────────────────────────────────────────────────────────┘
-```
-
-### 何時應該順手修復
-
-| 發現問題 | 處理方式 |
-|----------|----------|
-| 明顯的 bug（不管是否在任務範圍） | ✅ 立即修復 |
-| 不一致的程式碼模式 | ✅ 統一修復所有相關檔案 |
-| 缺少的 `__init__` 或參數問題 | ✅ 修復並確保一致性 |
-| 未使用的 import | ✅ 順手移除 |
-| 過時的註解或文檔 | ✅ 更新或移除 |
-| 重複的程式碼 | ⚠️ 記錄，視複雜度決定是否當場重構 |
-
-### 執行原則
-
-1. **發現即修復**：在執行任務過程中發現的問題，如果可以快速修復（< 5 分鐘），立即處理
-2. **一致性優先**：如果修復一個檔案，檢查相關檔案是否有同樣問題
-3. **記錄複雜問題**：如果問題太複雜無法立即處理，記錄到專案的 TODO 或 issues
-4. **不破壞任務流程**：技術債清理是附加工作，不應影響主要任務的完成
-
-### R→T 流程保障
-
-> **技術債修復也要經過 R→T，確保不會引入新問題！**
-
-```
-發現技術債
-    ↓
-修復（Main 直接修 or Developer）
-    ↓
-🔍 REVIEWER 審查  ← 確認修復正確、沒有副作用
-    ↓
-🧪 TESTER 測試    ← 確認功能正常、沒有 regression
-    ↓
-✅ 完成
-```
-
-**R→T 對技術債修復的幫助：**
-- **REVIEWER** 可以發現：修復是否完整、是否有遺漏的相關檔案、是否引入新問題
-- **TESTER** 可以確認：修復後系統仍正常運作、沒有破壞現有功能
-
-**範例：本次 Session**
-```
-發現：4 個策略缺少 __init__
-修復：Main 直接添加 __init__ 方法
-R：REVIEWER 發現還有其他問題（param_space 格式）
-T：TESTER 驗證 12/12 策略都能正常實例化
-結果：不只修復了原本的問題，還發現並修復了相關問題
-```
-
-### 範例：本次 Session 的技術債清理
-
-```
-發現：4 個原本就存在的策略缺少 __init__ 方法
-行動：順手修復，確保所有 12 個策略都有一致的初始化模式
-結果：不只完成了 8 個新策略，還修復了 4 個既有策略
-```
-
-### ⛔ 「預存在」不是藉口
-
-```
-┌────────────────────────────────────────────────────────────┐
-│  「這是預存在的問題」 = 無效藉口！                          │
-│  不論問題來自誰、何時產生，發現就必須修復！                │
-└────────────────────────────────────────────────────────────┘
-```
-
-**錯誤思維模式：**
-- ❌ 「這不是我寫的 bug，不關我的事」
-- ❌ 「這是預存在的問題，不在本次任務範圍」
-- ❌ 「這是別人的程式碼，我不應該動」
-- ❌ 「修復範圍外的問題會超出預算」
-
-**正確思維模式：**
-- ✅ 「發現 bug = 我的責任修復」
-- ✅ 「所有問題都是專案的問題，不是個人的問題」
-- ✅ 「現在修 5 分鐘，以後可能要 debug 5 小時」
-
-**適用對象：**
-- Main Agent：發現問題必須修復
-- Sub Agent：發現問題必須回報（讓 Main Agent 決定處理）
-- 所有角色：不允許以「預存在」為由跳過
-
-### 紅線
-
-- ❌ 不要因為「不在任務範圍」而忽略明顯的 bug
-- ❌ 不要留下「以後再修」的技術債（除非真的太複雜）
-- ❌ **不要以「預存在問題」為由跳過修復**（2026-01-13 新增）
-- ✅ 順手清理 = 長期維護成本降低
-
----
-
-## ⛔ 強制執行規則（Mandatory Enforcement）
-
-### 絕對禁止事項
-
-> **這些規則沒有例外，違反即為嚴重錯誤**
-
-| 禁止行為 | 原因 | 正確做法 |
-|----------|------|----------|
-| 直接寫程式碼而不用 D→R→T | 會產生未審查的 bug | 必須用 Task 工具產生 subagent |
-| 以「簡單」為由跳過審查 | 簡單任務也會有 bug | 所有程式碼都要經過 R→T |
-| 只顯示 emoji 假裝執行 | 沒有實際審查效果 | 必須實際呼叫 Task 工具 |
-| 自己審查自己的程式碼 | 無法發現盲點 | DEVELOPER ≠ REVIEWER |
-| 跳過測試直接標記完成 | 無法確認功能正確 | 必須 TESTER PASS 才能完成 |
-
-### 自我檢查清單（每次寫程式碼前必讀）
-
-在寫任何程式碼之前，必須回答以下問題：
-
-```
-□ 我是否要使用 Task(subagent_type: "developer") 而不是直接寫？
-□ 寫完後是否會呼叫 Task(subagent_type: "reviewer")？
-□ 審查通過後是否會呼叫 Task(subagent_type: "tester")？
-□ 如果任務「看起來很簡單」，我是否仍會執行完整 D→R→T？
-```
-
-**如果任何答案是「否」，必須停下來重新規劃！**
-
-### 程式碼產出的唯一合法路徑
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  所有程式碼產出都必須經過這條路徑，沒有捷徑！              │
-└─────────────────────────────────────────────────────────────┘
-
-用戶需求
-    ↓
-Task(subagent_type: "developer")  ← 產生程式碼
-    ↓
-Task(subagent_type: "reviewer")   ← 審查程式碼
-    │
-    ├── REJECT → 回到 developer（最多 3 次）
-    │
-    └── APPROVE
-            ↓
-        Task(subagent_type: "tester")  ← 測試程式碼
-            │
-            ├── FAIL → debugger → 回到 tester
-            │
-            └── PASS → ✅ 任務完成
-```
-
-### 違規行為的自動修正
-
-如果發現自己正在：
-1. **直接用 Edit/Write 修復後準備繼續** → 停止！先呼叫 reviewer 和 tester
-2. **寫完程式碼準備繼續下一個任務** → 停止！先呼叫 reviewer
-3. **reviewer 通過後準備標記完成** → 停止！先呼叫 tester
-4. **認為「這個太簡單不需要審查」** → 錯誤！簡單修復更容易忽略 bug
-5. **Main 直接修復後沒有 R→T** → 停止！Main 修復也需要審查測試
-
-### 特殊情況處理
-
-| 情況 | 處理方式 |
-|------|----------|
-| 只是修改配置檔 | 仍需 D→R→T（配置錯誤也是 bug） |
-| 只是加註解 | 可以跳過（不影響功能） |
-| 只是修改文檔 | 可以跳過（不是程式碼） |
-| 修復 typo | 仍需 D→R→T（typo 可能影響功能） |
-| 緊急 hotfix | 仍需 D→R→T（緊急不是跳過的理由） |
-
-### 問責機制
-
-每次 session 結束前，必須確認：
-
-```
-本次 session 程式碼產出統計：
-- 使用 D→R→T 完成的任務：X 個
-- 跳過審查的任務：Y 個（應該是 0）
-
-如果 Y > 0，必須說明原因並補做審查！
-```
-
-### 歸檔流程
-
-所有任務完成後：
-
-```bash
-openspec archive [change-id] --yes
-```
-
-歸檔後：
-- 變更移動到 `openspec/changes/archive/YYYY-MM-DD-[change-id]/`
-- `specs/` 自動更新
-- Git commit: `chore: archive [change-id]`
-
-### 🧹 自動清理流程（開發最後一步）
-
-**每次工作流完成後，必須執行自動清理。**
-
-詳細規則請參考 **workflow** skill → `references/cleanup.md`
-
-#### 快速命令
-
-```bash
-# 一鍵清理快取
-find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null; \
-find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null; \
-find . -type f -name "*.pyc" -delete 2>/dev/null; \
-rm -rf .playwright-mcp/ htmlcov/ .coverage 2>/dev/null
-```
-
-### Loop 清理（重要！）
-
-**工作流完成後必須明確關閉 loop，避免殘留狀態：**
-
-```bash
-# 完成後執行 cancel 確保乾淨關閉
-/ralph-loop:cancel-ralph
-```
-
-完整的結束流程：
-1. 所有任務完成 ✅
-2. `openspec archive [change-id] --yes`
-3. 🧹 **執行清理**（參考 workflow → `references/cleanup.md`）
-4. 📝 **檢查開發筆記**（讀取 `notes.md`，在報告中提醒）
-5. `/ralph-loop:cancel-ralph`
-6. 輸出最終報告（含筆記提醒）
-7. 輸出「✅ 工作流完成，專案已清理，loop 已關閉」
-
----
-
-## 📋 Session 結束檢查（必做！）
-
-每次 session 結束或用戶說「完成」「結束」「謝謝」時，必須輸出**簡潔報告**：
+## Session Report
 
 ```
 ═══ Session Report ═══
@@ -741,40 +156,15 @@ rm -rf .playwright-mcp/ htmlcov/ .coverage 2>/dev/null
 ═══════════════════════
 ```
 
-**異常時才展開詳情：**
+## 🔴 紅線規則
 
-```
-═══ Session Report ═══
-✅ D→R→T: 3/4 (75%)
-   ⚠️ 跳過: [任務名稱] - 原因: [...]
-⚡ 並行: 5/6 (83%)
-   🐢 串行: [操作] - 應該並行
-📝 變更: 4 files, -234 lines
-═══════════════════════
-```
+觸發後必須**立即停止並調整**：
 
-**異常處理：**
-- 跳過審查 → 列出原因，詢問是否補做
-- 串行違規 → 說明原因，承諾改進
+1. 發現自己正在直接寫程式碼 → 停止，改用 Task(developer)
+2. 發現程式碼寫完沒有審查 → 停止，呼叫 Task(reviewer)
+3. 發現審查完沒有測試 → 停止，呼叫 Task(tester)
+4. 發現連續發送多個 Read/Grep → 停止，合併為一次發送
 
 ---
 
-## 🔴 紅線規則（Red Line Rules）
-
-以下行為觸發後，必須**立即停止並調整**：
-
-### D→R→T 紅線
-1. **發現自己正在直接寫程式碼** → 停止，改用 Task(developer)
-2. **發現程式碼寫完沒有審查** → 停止，呼叫 Task(reviewer)
-3. **發現審查完沒有測試** → 停止，呼叫 Task(tester)
-4. **發現以「效率」為由跳過流程** → 這是錯誤的優化，品質 > 速度
-
-### 並行化紅線
-5. **發現自己連續發送多個 Read** → 停止，合併為一次發送
-6. **發現自己連續發送多個 Grep/Glob** → 停止，合併為一次發送
-7. **發現自己串行執行獨立任務** → 停止，考慮並行啟動 Task
-8. **發現操作之間其實沒有依賴** → 停止，改為並行執行
-
-**記住：**
-- 跳過 D→R→T 節省的時間，會在 debug 時加倍償還！
-- 串行執行無依賴操作，是在浪費用戶的時間！
+**詳細規則請參考 `workflow` skill 的 `references/` 目錄。**

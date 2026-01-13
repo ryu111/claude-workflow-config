@@ -171,6 +171,45 @@ it('should do something', () => {
 });
 ```
 
+## ⚠️ 數據一致性測試（必做）
+
+### 同頁面多圖表驗證
+
+當頁面有多個圖表/數據展示時，必須驗證：
+
+```python
+# 使用 Playwright 驗證數據一致性
+browser_navigate(url: "http://localhost:8501/Strategies")
+browser_snapshot()
+
+# 1. 檢查權益曲線數據範圍
+browser_evaluate(
+  element: "equity chart",
+  ref: "...",
+  function: "(el) => el.__data__.length"  # 取得數據點數量
+)
+
+# 2. 檢查月度報酬數據範圍
+browser_evaluate(
+  element: "monthly heatmap",
+  ref: "...",
+  function: "(el) => el.__data__.length"
+)
+
+# 3. 驗證一致性
+# 如果 equity 有 365 天，monthly 應該有 12 個月
+# 如果 equity 有 100 天，monthly 應該約 3-4 個月
+```
+
+### 數據一致性 Checklist
+- [ ] 同一實體（如同一策略）的不同視圖顯示相同時間範圍？
+- [ ] 拖動/縮放時，相關圖表是否同步更新？
+- [ ] 數據更新時，所有視圖是否同時更新？
+
+### 發現不一致時
+→ 報告為 **P0 Bug**
+→ 格式：「數據不一致：[組件A] 顯示 X 範圍，[組件B] 顯示 Y 範圍」
+
 ### Naming Convention
 
 ```typescript

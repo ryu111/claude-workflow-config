@@ -139,6 +139,33 @@ def fetch_user(user_id: str) -> User | None:
 ❌ Don't ignore existing error handling patterns
 ❌ Don't create files without clear purpose
 
+## ⛔ 半成品禁止規則（No Placeholder Code）
+
+### 絕對禁止
+❌ **TODO + 假數據**：不能用 `# TODO: 實際從結果載入` 配合隨機數據上線
+❌ **硬編碼測試數據**：不能用 `days = 100` 或 `np.random.randn()` 作為生產數據
+❌ **跳過數據整合**：不能「先做 UI 再接數據」然後忘記接
+
+### 必須完成的項目
+每個數據展示組件必須：
+- [ ] 連接真實數據來源（不是假數據）
+- [ ] 處理數據缺失情況（友善提示）
+- [ ] 處理數據格式錯誤（錯誤處理）
+- [ ] 與相關組件數據範圍一致
+
+### 自我檢查（提交前必做）
+```bash
+# 檢查是否有遺留的 TODO
+grep -r "TODO" --include="*.py" src/
+grep -r "FIXME" --include="*.py" src/
+
+# 檢查是否有假數據
+grep -r "random" --include="*.py" src/ui/
+grep -r "np.random" --include="*.py" src/ui/
+```
+
+如果找到任何 TODO + 假數據組合，**不能提交**，必須先完成實作。
+
 ## Output Expectations
 
 When implementing:
@@ -146,3 +173,20 @@ When implementing:
 2. Explain key decisions briefly
 3. Highlight any assumptions made
 4. Note any follow-up tasks needed (tests, etc.)
+
+## 📋 變更摘要（供 REVIEWER 快速理解）
+
+**完成實作後，必須輸出變更摘要：**
+
+```
+## 變更摘要
+- **修改檔案**：src/xxx.py, src/yyy.py
+- **變更類型**：[新功能/Bug修復/重構/優化]
+- **影響範圍**：[函數/類別/模組名稱]
+- **關鍵變更**：
+  1. [具體變更 1]
+  2. [具體變更 2]
+- **測試建議**：[建議 TESTER 重點測試的項目]
+```
+
+這個摘要讓 REVIEWER 可以快速理解變更，不需要重新讀取所有 diff。
