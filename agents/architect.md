@@ -111,7 +111,27 @@ openspec/changes/[change-id]/
 ## Impact
 - Affected specs: [受影響的 capability]
 - Affected code: [關鍵檔案/系統]
+
+## Data Contracts（資料契約）
+[定義模組間傳遞的資料結構，確保 DEVELOPER 知道要傳什麼]
+
+### [模組 A] → [模組 B]
+```python
+@dataclass
+class XXXResult:
+    field1: type  # 必要/可選，說明
+    field2: type  # 必要/可選，說明
 ```
+
+### [模組 B] → [模組 C]
+...
+```
+
+**⚠️ 資料契約規則：**
+- 跨模組傳遞必須定義 dataclass/TypedDict，禁止裸 dict
+- 每個欄位標註必要/可選
+- 設定端和讀取端必須使用相同屬性名稱
+- DEVELOPER 實作時必須遵守契約，REVIEWER 必須檢查
 
 #### tasks.md（重要：帶 checkbox 追蹤進度）
 ```markdown
