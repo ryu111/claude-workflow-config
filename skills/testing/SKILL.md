@@ -197,6 +197,19 @@ describe('calculateTotal', () => {
 
 ### Integration Test 範本
 
+**整合測試重點：驗證資料流完整性**
+
+```
+模組 A ──資料──▶ 模組 B ──資料──▶ 模組 C
+         ↑              ↑
+    檢查點 1       檢查點 2
+
+必須驗證：
+□ 欄位名稱一致（沒有 _name vs name 問題）
+□ 必要欄位都有傳遞（沒有遺漏）
+□ 型別正確（沒有 string vs number 問題）
+```
+
 ```typescript
 describe('POST /api/users', () => {
   beforeEach(async () => {

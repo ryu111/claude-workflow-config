@@ -159,6 +159,75 @@ For complete optimization → read `references/performance.md`
 
 ---
 
+## 資料契約（型別定義）
+
+**跨模組資料傳遞必須使用明確型別定義，禁止裸 dict。**
+
+### 為什麼需要
+
+```python
+# ❌ 問題：裸 dict 容易打錯 key、遺漏欄位
+result = {
+    'sharpe': 1.5,
+    'strategy_name': 'ma_cross',  # 有時候忘記加
+}
+# 讀取時：result['stratgy_name']  # typo，沒有警告
+
+# ✅ 解法：使用 dataclass 或 TypedDict
+@dataclass
+class OptimizationResult:
+    sharpe: float
+    strategy_name: str
+    total_return: float
+    # IDE 會提醒遺漏的欄位，typo 會報錯
+```
+
+### 規則
+
+| 情境 | 要求 |
+|------|------|
+| 模組間資料傳遞 | **必須**使用 dataclass/TypedDict |
+| 函數回傳值（複雜結構） | **必須**定義型別 |
+| 臨時內部計算 | 可用 dict，但不傳出模組 |
+
+### 專案結構建議
+
+```
+src/types/
+├── __init__.py       # 匯出所有型別
+├── results.py        # 回測/優化結果型別
+├── configs.py        # 配置型別
+└── strategies.py     # 策略相關型別
+```
+
+### 範例
+
+```python
+# src/types/results.py
+from dataclasses import dataclass
+from typing import Dict, Any, Optional
+
+@dataclass
+class BacktestResult:
+    sharpe_ratio: float
+    total_return: float
+    max_drawdown: float
+    win_rate: float
+    total_trades: int
+    params: Dict[str, Any]
+    strategy_name: str
+    symbol: str
+    timeframe: str
+
+@dataclass
+class ValidationResult:
+    grade: str  # A/B/C/D/F
+    passed_stages: list[int]
+    details: Optional[Dict[str, Any]] = None
+```
+
+---
+
 ## 程式碼範本
 
 ### API Handler (TypeScript)

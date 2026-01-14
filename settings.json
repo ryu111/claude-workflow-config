@@ -81,6 +81,19 @@
             "timeout": 2
           }
         ]
+      },
+      {
+        "matchers": [
+          "Read",
+          "Grep"
+        ],
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/tech-debt-reminder.sh",
+            "timeout": 2
+          }
+        ]
       }
     ]
   },

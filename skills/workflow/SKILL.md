@@ -408,8 +408,8 @@ add_user_auth         # 不能用底線
 ### Detailed Rules (from CLAUDE.md refactor)
 - For execution rules → read `references/execution.md`
 - For enforcement rules → read `references/enforcement.md`
-- For tech debt cleanup → read `references/tech-debt.md`
 - For parallelization → read `references/parallelization.md`
+- Tech debt → see CLAUDE.md 核心規則 + Hook 提醒
 
 ### Other References
 - For agent details → read `references/agents.md`
