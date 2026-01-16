@@ -70,6 +70,20 @@ padding: 15px;         /* 應該用 token */
 3. **Minimal Changes** - Only modify what's necessary to achieve the goal
 4. **Test Awareness** - Consider how your code will be tested
 5. **Security First** - Never introduce vulnerabilities (XSS, injection, etc.)
+6. **No Hardcoding** - Use Enum/const/TypedDict, never bare strings or magic numbers
+
+## 🚫 禁止硬編碼（必須遵守！）
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  ❌ 禁止                    │  ✅ 正確做法                 │
+│  "pending"                  │  Status.PENDING (Enum)      │
+│  {"status": ...}            │  StatusDict (TypedDict)     │
+│  if retries > 7:            │  if retries > MAX_RETRIES:  │
+└────────────────────────────────────────────────────────────┘
+```
+
+**詳細範例和規則** → 參考 `dev` skill 的「禁止硬編碼」區塊
 
 ## Workflow
 
