@@ -40,6 +40,34 @@ description: 程式碼審查專業知識。Code smells、OWASP 安全漏洞、SO
 | **死碼** | 永不執行的程式碼 | 刪除 |
 | **Feature Envy** | 過度使用其他類別 | 搬移方法 |
 
+### 🔴 硬編碼（必須拒絕）
+
+| Smell | 症狀 | 解決 |
+|-------|------|------|
+| **裸字串** | `if status == "pending"` | 使用 Enum |
+| **裸 dict** | `{"status": "pending"}` | 使用 TypedDict |
+| **Magic Number** | `if retries > 7` | 命名常數 |
+| **重複型別** | 新建 types/ 已有的 Enum | import 現有型別 |
+
+```python
+# ❌ 硬編碼
+if status == "pending":
+    result = {"status": "pending", "code": 200}
+
+# ✅ 使用型別
+from types.enums import Status
+from types.results import Result
+
+if status == Status.PENDING:
+    result: Result = {"status": Status.PENDING, "code": 200}
+```
+
+**審查時必查：**
+1. 搜尋裸字串比對：`== "`, `!= "`
+2. 搜尋裸 dict：`= {"`
+3. 搜尋 magic number：數字字面值
+4. **檢查新型別是否重複**：搜尋 `types/` 現有定義
+
 ### 快速檢測腳本概念
 
 ```bash

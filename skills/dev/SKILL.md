@@ -159,6 +159,141 @@ For complete optimization → read `references/performance.md`
 
 ---
 
+## 🚫 禁止硬編碼（核心規則）
+
+**硬編碼 = 隱藏的 bug 來源，必須使用語言特性定義常數。**
+
+### 為什麼禁止
+
+| 問題 | 後果 |
+|------|------|
+| Typo 無法被捕捉 | `"stauts"` vs `"status"` → runtime error |
+| 無法重構 | 改名時到處漏改 |
+| 無自動完成 | 每次都要查文件 |
+| 無型別檢查 | 傳錯值沒有警告 |
+
+### Python 範例
+
+```python
+# ❌ 硬編碼
+def process(status: str):
+    if status == "pending":    # typo 風險
+        ...
+    elif status == "completed":
+        ...
+
+result = {"status": "pending", "code": 200}  # 結構不明確
+
+# ✅ 使用 Enum + TypedDict
+from enum import Enum
+from typing import TypedDict
+
+class Status(Enum):
+    PENDING = "pending"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+class Result(TypedDict):
+    status: Status
+    code: int
+
+def process(status: Status):  # IDE 自動完成
+    if status == Status.PENDING:  # typo 會報錯
+        ...
+
+result: Result = {"status": Status.PENDING, "code": 200}
+```
+
+### TypeScript 範例
+
+```typescript
+// ❌ 硬編碼
+function process(status: string) {
+    if (status === "pending") { ... }
+}
+
+const result = { status: "pending", code: 200 };
+
+// ✅ 使用 enum + interface
+enum Status {
+    Pending = "pending",
+    Completed = "completed",
+    Failed = "failed"
+}
+
+interface Result {
+    status: Status;
+    code: number;
+}
+
+function process(status: Status) {
+    if (status === Status.Pending) { ... }
+}
+
+const result: Result = { status: Status.Pending, code: 200 };
+```
+
+### Magic Number 規則
+
+```python
+# ❌ Magic Number
+if retries > 7:
+    raise Error("Too many retries")
+
+time.sleep(30)
+
+# ✅ 命名常數
+MAX_RETRIES = 7
+RETRY_DELAY_SECONDS = 30
+
+if retries > MAX_RETRIES:
+    raise Error("Too many retries")
+
+time.sleep(RETRY_DELAY_SECONDS)
+```
+
+### ⚠️ 防範重複定義
+
+**禁止硬編碼 ≠ 到處建立新的 Enum/TypedDict**
+
+```python
+# ❌ 錯誤：每個檔案都定義自己的
+# file1.py
+class Status(Enum):
+    PENDING = "pending"
+
+# file2.py
+class Status(Enum):  # 重複定義！
+    PENDING = "pending"
+
+# ✅ 正確：集中定義，全專案 import
+# types/enums.py
+class Status(Enum):
+    PENDING = "pending"
+    COMPLETED = "completed"
+
+# file1.py, file2.py
+from types.enums import Status
+```
+
+### 新增型別前的檢查
+
+| 步驟 | 動作 |
+|------|------|
+| 1 | 搜尋 `types/` 或 `constants/` 是否已有類似定義 |
+| 2 | 檢查現有定義能否擴展（加欄位/加值） |
+| 3 | 若真的需要新型別，放在共用模組 |
+
+### 檢查清單
+
+- [ ] 所有狀態值使用 Enum
+- [ ] 所有結構化資料使用 TypedDict/dataclass/interface
+- [ ] 所有數字常數有命名
+- [ ] 所有字串 key 有型別定義
+- [ ] **新型別放在集中位置（types/），不重複定義**
+
+---
+
 ## 資料契約（型別定義）
 
 **跨模組資料傳遞必須使用明確型別定義，禁止裸 dict。**
