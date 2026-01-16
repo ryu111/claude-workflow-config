@@ -24,3 +24,4 @@ plans/
 # Todos (session-specific)
 todos/
 settings.local.json
+logs/
