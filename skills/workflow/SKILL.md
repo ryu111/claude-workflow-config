@@ -40,7 +40,7 @@ USER INPUT → MAIN AGENT → SUB-AGENT → result → MAIN decides next
 規劃 購物車功能 loop
 ```
 
-## OpenSpec 目錄結構
+## OpenSpec 目錄結構（Kanban 三階段）
 
 **重要**：所有規格檔案存放在**專案目錄**內，不是全域目錄。
 
@@ -48,16 +48,40 @@ USER INPUT → MAIN AGENT → SUB-AGENT → result → MAIN decides next
 project/
 └── openspec/
     ├── project.md              # 專案慣例
-    ├── specs/                  # 當前狀態（已實作的功能）
-    │   └── [capability]/
-    │       └── spec.md
-    └── changes/                # 變更提議（待實作）
-        ├── [change-id]/
-        │   ├── proposal.md     # 為什麼、改什麼
-        │   ├── tasks.md        # 實作清單（帶 checkbox）
-        │   ├── design.md       # 技術決策（可選）
-        │   └── specs/          # Delta 變更
-        └── archive/            # 已完成的變更
+    ├── specs/                  # 待執行（Backlog）
+    │   └── [change-id]/
+    │       ├── proposal.md     # 完整規劃
+    │       ├── tasks.md ☐☐☐    # 任務清單（未開始）
+    │       └── notes.md        # 規劃筆記
+    ├── changes/                # 進行中（WIP）
+    │   └── [change-id]/
+    │       ├── proposal.md
+    │       ├── tasks.md ☑☐☐    # 任務清單（部分完成）
+    │       └── notes.md
+    └── archive/                # 已完成（Done）
+        └── [change-id]/
+            ├── proposal.md
+            ├── tasks.md ☑☑☑    # 任務清單（全部完成）
+            └── notes.md
+```
+
+### 階段轉換
+
+| 轉換 | 時機 | 指令 |
+|------|------|------|
+| 規劃 → 待執行 | 規劃完成 | 建立在 `specs/[id]/` |
+| 待執行 → 進行中 | 開始執行 | `mv openspec/specs/[id] openspec/changes/[id]` |
+| 進行中 → 已完成 | 全部完成 | `openspec archive [id] --yes` |
+
+### Kanban 看板視圖
+
+```
+specs/          →      changes/       →      archive/
+────────────────────────────────────────────────────────
+待執行 (Backlog)      進行中 (WIP)         已完成 (Done)
+
+• 企劃 A            • 企劃 C             • 企劃 X
+• 企劃 B            • 企劃 D             • 企劃 Y
 ```
 
 ## Six Agents
@@ -132,11 +156,14 @@ For migration flow details → read `references/flows/migration.md`
      ↓
 ARCHITECT 執行：
 1. 分析 codebase
-2. 建立 openspec/changes/[change-id]/
+2. 建立 openspec/specs/[change-id]/    ← 放到「待執行」
    ├── proposal.md
-   ├── tasks.md
-   └── specs/
+   ├── tasks.md ☐☐☐
+   └── notes.md
 3. 等待用戶審核
+     ↓
+用戶審核通過，準備執行：
+mv openspec/specs/[change-id] openspec/changes/[change-id]
 ```
 
 ### Mode 1.5: ⚡ 並行任務分配（規劃後、執行前）
@@ -215,12 +242,15 @@ Task(subagent_type: "developer", prompt: "實作 Task 2.2...")  } 同時發送
 用戶: 接手 [change-id]  或  工作流 [change-id]
      ↓
 Main Agent 執行：
-1. 讀取 openspec/changes/[change-id]/tasks.md
-2. 分析任務依賴，分配 Phase Batches
-3. 使用 TodoWrite 建立 phase todos
-4. 找到第一個未完成的 Phase
-5. 並行執行 Phase 內所有任務的 D→R→T
-6. Phase 完成後進入下一個 Phase
+1. 檢查位置：
+   - 如果在 specs/  → 移動到 changes/（開始執行）
+   - 如果在 changes/ → 繼續執行
+2. 讀取 openspec/changes/[change-id]/tasks.md
+3. 分析任務依賴，分配 Phase Batches
+4. 使用 TodoWrite 建立 phase todos
+5. 找到第一個未完成的 Phase
+6. 並行執行 Phase 內所有任務的 D→R→T
+7. Phase 完成後進入下一個 Phase
 ```
 
 ## Task Workflow (D→R→T)
@@ -297,10 +327,11 @@ Format: `feat|fix|refactor|test(task-X.X): description`
 所有任務完成 `- [x]`
      ↓
 【強制】執行歸檔：
-mv openspec/changes/[change-id] openspec/changes/archive/$(date +%Y-%m-%d)-[change-id]
+openspec archive [change-id] --yes
+# 或手動：mv openspec/changes/[change-id] openspec/archive/[change-id]
      ↓
 變更被移動到：
-openspec/changes/archive/YYYY-MM-DD-[change-id]/
+openspec/archive/[change-id]/
      ↓
 Git commit: "chore: archive [change-id]"
      ↓
@@ -313,7 +344,7 @@ Git commit: "chore: archive [change-id]"
 - [ ] 所有測試通過
 - [ ] 程式碼已 commit
 - [ ] **執行歸檔（必須在 promise 前完成）**
-- [ ] 驗證 changes/ 目錄已清空（只剩 archive/）
+- [ ] 驗證 changes/ 目錄已清空
 
 ### 自動提醒機制
 
@@ -350,7 +381,7 @@ For complete cleanup rules → read `references/cleanup.md`
 ```
 1. 所有任務完成 ✅
 2. 【必須】執行歸檔：
-   mv openspec/changes/[id] openspec/changes/archive/$(date +%Y-%m-%d)-[id]
+   openspec archive [id] --yes
 3. 🧹 執行清理（參考 references/cleanup.md）
 4. 📝 檢查開發筆記（參考 references/dev-notes.md）
 5. 輸出最終報告（含筆記提醒）

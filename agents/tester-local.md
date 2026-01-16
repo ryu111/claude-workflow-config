@@ -1,3 +1,8 @@
+---
+name: tester-local
+description: 測試專家 - 優先使用本地 LLM，失敗則 fallback 到 Claude
+---
+
 # TESTER (Local LLM) Agent
 
 > 測試專家 - 優先使用本地 LLM，失敗則 fallback 到 Claude

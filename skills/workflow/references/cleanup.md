@@ -75,9 +75,8 @@ project/
 │       ├── specs/         # 舊規格文檔
 │       └── task-reports/  # 任務報告
 ├── openspec/
-│   └── changes/
-│       └── archive/       # 完成的變更
-│           └── YYYY-MM-DD-[change-id]/
+│   └── archive/           # 完成的變更
+│       └── [change-id]/
 ├── reports/
 │   └── archive/           # 報告歸檔
 │       ├── backtest/      # 回測報告
@@ -92,7 +91,7 @@ project/
 
 | 檔案類型 | 歸檔位置 | 命名規則 |
 |----------|----------|----------|
-| **OpenSpec 變更** | `openspec/changes/archive/` | `YYYY-MM-DD-[change-id]/` |
+| **OpenSpec 變更** | `openspec/archive/` | `[change-id]/` |
 | **任務報告** | `docs/archive/task-reports/` | `TASK_*_SUMMARY.md` |
 | **測試報告** | `reports/archive/test/` | `TEST_REPORT_*.md` |
 | **回測報告** | `reports/archive/backtest/` | `BACKTEST_*.md` |
@@ -164,7 +163,7 @@ mv BACKTEST_*.md reports/archive/backtest/ 2>/dev/null
 | `.env`, `.env.local` | 環境配置 |
 | `.gitignore` | Git 配置 |
 | `README.md`, `CHANGELOG.md` | 專案文檔 |
-| `openspec/specs/` | 當前規格 |
+| `openspec/specs/` | 待執行規劃（Backlog） |
 
 ### 3.2 條件保留
 
@@ -205,7 +204,7 @@ mv BACKTEST_*.md reports/archive/backtest/ 2>/dev/null
   🗑️ .coverage: 1 個檔案
 
 【歸檔項目】
-  📦 openspec/changes/[change-id]/ → archive/YYYY-MM-DD-[change-id]/
+  📦 openspec/changes/[change-id]/ → openspec/archive/[change-id]/
   📦 TASK_*_SUMMARY.md → docs/archive/task-reports/ (X 個)
   📦 TEST_REPORT_*.md → reports/archive/test/ (X 個)
 
@@ -213,7 +212,7 @@ mv BACKTEST_*.md reports/archive/backtest/ 2>/dev/null
   ✅ src/ (核心程式碼)
   ✅ tests/ (測試程式碼)
   ✅ docs/ (當前文檔)
-  ✅ openspec/specs/ (當前規格)
+  ✅ openspec/specs/ (待執行規劃)
 
 【空間統計】
   - 刪除釋放：約 XX MB

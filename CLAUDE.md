@@ -220,11 +220,17 @@ Task(subagent_type: "developer", prompt: "Task 2.1...")  }
 ✅ 使用 OpenSpec + AskUserQuestion + TodoWrite
 ```
 
-### OpenSpec 完整替代方案
+### OpenSpec 完整替代方案（Kanban 三階段）
+
+| 階段 | 目錄 | 說明 |
+|------|------|------|
+| 待執行 | `openspec/specs/[id]/` | 規劃完成，等待開始 |
+| 進行中 | `openspec/changes/[id]/` | 正在執行 |
+| 已完成 | `openspec/archive/[id]/` | 歸檔歷史 |
 
 | 內建 Plan Mode 功能 | OpenSpec 替代 |
 |---------------------|---------------|
-| 計劃檔案 | `openspec/changes/[change-id]/` |
+| 計劃檔案 | `openspec/specs/[change-id]/` |
 | 補充問題 | `AskUserQuestion` 工具 |
 | 進度顯示 | `TodoWrite` 工具 |
 | 快速筆記 | 專案層級 `notes.md`（共用） |
@@ -237,11 +243,14 @@ Task(subagent_type: "developer", prompt: "Task 2.1...")  }
 🏗️ ARCHITECT 執行：
     1. AskUserQuestion → 補充問題
     2. TodoWrite → 建立任務追蹤
-    3. 建立 openspec/changes/[change-id]/
+    3. 建立 openspec/specs/[change-id]/    ← 放到「待執行」
        ├── proposal.md
-       └── tasks.md
-    4. 過程想法 → 專案 notes.md
-    5. 等待用戶審核
+       ├── tasks.md ☐☐☐
+       └── notes.md
+    4. 等待用戶審核
+    ↓
+用戶審核通過，開始執行：
+    mv openspec/specs/[id] openspec/changes/[id]
 ```
 
 ---
@@ -321,10 +330,9 @@ Main Agent 遇到任務時，先識別應使用的流程：
 
 | Skill | 用途 |
 |-------|------|
-| **skills** | Skills 建立與維護（含規範、範本）|
+| **skill-agent** | Skills 與 Agents 建立維護（含規範、範本）|
 | **workflow** | 工作流設計與驗證（S→W、M→S→W→D→R→T）|
 | **migration** | 工具/框架遷移規劃 |
-| **skill-creator** | 建立 Skills 指南（已整合到 skills）|
 | **hooks-guide** | Hooks 配置指南 |
 
 ## Workflow Limits
@@ -338,9 +346,9 @@ Main Agent 遇到任務時，先識別應使用的流程：
 
 ```
 ~/.claude/agents/
-├── architect.md    ├── developer.md    ├── tester.md
-├── skills.md       ├── reviewer.md     ├── debugger.md
-├── workflow.md     ├── designer.md     └── migration.md
+├── architect.md       ├── developer.md      ├── tester.md
+├── skills-agents.md   ├── reviewer.md       ├── debugger.md
+├── workflow.md        ├── designer.md       └── migration.md
 ```
 
 ## 並行化原則

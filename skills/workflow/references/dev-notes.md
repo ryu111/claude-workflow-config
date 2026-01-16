@@ -123,7 +123,7 @@ Edit("openspec/changes/[change-id]/notes.md", ...)
 
 【任務完成情況】
 ✅ 已完成：8/8 任務
-📁 已歸檔：openspec/changes/archive/2026-01-11-[change-id]/
+📁 已歸檔：openspec/archive/[change-id]/
 
 【清理報告】
 🗑️ 刪除：__pycache__/ (5), .pytest_cache/ (1)
@@ -162,7 +162,7 @@ Edit("openspec/changes/[change-id]/notes.md", ...)
 當工作流歸檔時，`notes.md` 會一起移動到歸檔目錄：
 
 ```
-openspec/changes/archive/2026-01-11-[change-id]/
+openspec/archive/[change-id]/
 ├── proposal.md
 ├── tasks.md
 ├── notes.md    ← 保留供未來參考

@@ -54,7 +54,7 @@ openspec archive [change-id] --yes
 ```
 
 歸檔後：
-- 變更移動到 `openspec/changes/archive/YYYY-MM-DD-[change-id]/`
+- 變更移動到 `openspec/archive/[change-id]/`
 - `specs/` 自動更新
 - Git commit: `chore: archive [change-id]`
 

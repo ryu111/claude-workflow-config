@@ -1,32 +1,33 @@
 ---
-name: skills
-description: Skills 建立與維護專業知識。當需要建立新 skill、更新現有 skill、了解 skill 結構、或使用 bundled resources 和 progressive disclosure 模式時使用。包含觸發條件和最佳實踐。
+name: skill-agent
+description: Skills 與 Agents 建立維護專業知識。當需要建立新 skill、新 agent、更新現有定義、了解結構規範時使用。包含 bundled resources、progressive disclosure 模式、frontmatter 規範。
 ---
 
-# Skills Management
+# Skills & Agents Management
 
-建立、維護和優化 Claude Skills 的完整指南。
+建立、維護和優化 Claude Skills 與 Agents 的完整指南。
 
 ## Quick Reference
 
 ### 核心原則
 
-| 原則 | 說明 |
-|------|------|
-| **Progressive Disclosure** | 分層載入，避免 token 浪費 |
-| **Bundled Resources** | scripts/references/assets 分離 |
-| **精簡至上** | 只包含 AI 不知道的資訊 |
-| **單層連結** | SKILL.md → reference（不要 A → B → C） |
-| **適當自由度** | 指引 vs pseudocode vs 腳本 |
+| 原則 | 適用 | 說明 |
+|------|------|------|
+| **Progressive Disclosure** | Skills | 分層載入，避免 token 浪費 |
+| **Bundled Resources** | Skills | scripts/references/assets 分離 |
+| **精簡至上** | Both | 只包含 AI 不知道的資訊 |
+| **單層連結** | Skills | SKILL.md → reference（不要 A → B → C） |
+| **適當自由度** | Both | 指引 vs pseudocode vs 腳本 |
+| **Frontmatter 必填** | Both | name + description 必要 |
 
-### 何時建立 Skill
+### 何時建立
 
 | 情境 | 動作 |
 |------|------|
-| 重複提供相同知識 | 建立 skill |
-| 需要特定領域規範 | 建立 references/ |
-| 重複撰寫相同程式碼 | 建立 scripts/ |
-| 需要模板檔案 | 建立 assets/ |
+| 重複提供相同知識 | 建立 **Skill** |
+| 需要特定領域規範 | Skill + references/ |
+| 需要執行角色定義 | 建立 **Agent** |
+| 需要工作流協作角色 | 建立 **Agent** |
 
 ### 基本流程
 
@@ -307,50 +308,62 @@ pdf-processing/
 
 ---
 
-## 與 skill-creator 的關係
-
-### 演變過程
+## Agent 結構
 
 ```
-skill-creator (原始)
-    ↓
-skills (整合版本)
-    ↓
-包含：skill-creator 內容 + 觸發條件 + 維護指南
+~/.claude/agents/
+└── agent-name.md          # 單一檔案定義
 ```
 
-### 升級指引
+### Agent 檔案規範
 
-**如果你正在使用 `skill-creator`**：
-- `skills` skill 包含所有 `skill-creator` 的內容
-- 增加了觸發條件和維護指南
-- 建議遷移到 `skills` 以獲得完整功能
+```markdown
+---
+name: agent-name           # 小寫，連字號分隔
+description: 角色描述       # 簡短說明角色職責
+model: sonnet              # 可選：sonnet, opus, haiku
+skills: skill1, skill2     # 可選：自動載入的 skills
+---
 
-**主要差異**：
-| skill-creator | skills |
-|---------------|--------|
-| 建立指南 | 建立 + 維護 + 觸發 |
-| 基本結構 | 完整生命週期 |
-| - | 包含觸發條件設計 |
+# Agent Title
+
+[角色定義和工作流程]
+```
+
+**Frontmatter 規則**：
+
+| 欄位 | 必要 | 說明 |
+|------|------|------|
+| `name` | ✅ | 小寫，用連字號分隔 |
+| `description` | ✅ | 角色職責描述 |
+| `model` | ❌ | 預設 sonnet |
+| `skills` | ❌ | 自動載入的 skills |
+
+### Agent vs Skill 選擇
+
+| 需求 | 選擇 | 原因 |
+|------|------|------|
+| 知識庫 | Skill | 被動載入，提供參考 |
+| 執行角色 | Agent | 主動執行，可修改檔案 |
+| 工作流節點 | Agent | 在 D→R→T 中扮演角色 |
 
 ---
 
 ## 進階主題
 
 ### 詳細規範
-- Skill Standard 完整規範 → `references/skill-standard.md`
-- Progressive Disclosure 深入 → `references/progressive-disclosure.md`
+- Skill Standard → `references/skill-standard.md`
+- Agent Standard → `references/agent-standard.md`
+- Progressive Disclosure → `references/progressive-disclosure.md`
 
 ### 範本使用
-- SKILL.md 範本 → `templates/SKILL-template.md`
-- Frontmatter 範本 → `templates/frontmatter.yaml`
+- SKILL.md 範本 → `templates/SKILL.md.template`
+- AGENT.md 範本 → `templates/AGENT.md.template`
 
 ### 實際範例
-- 現有 skills 參考 → `~/.claude/skills/`
-  - `dev/` - 開發專業知識
-  - `ui/` - 視覺設計規範
-  - `workflow/` - 工作流系統
+- Skills：`~/.claude/skills/` → dev, ui, workflow
+- Agents：`~/.claude/agents/` → developer, reviewer, tester
 
 ---
 
-**下次建立 skill 時，從這裡開始。**
+**建立新 Skill 或 Agent 時，從這裡開始。**
