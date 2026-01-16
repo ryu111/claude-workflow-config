@@ -347,12 +347,24 @@ class MCPClient extends EventEmitter {
         if (this.serverProcess && this.serverProcess.exitCode === null) {
             this.serverProcess.kill('SIGTERM');
 
-            // Force kill if doesn't exit gracefully
-            setTimeout(() => {
-                if (this.serverProcess && this.serverProcess.exitCode === null) {
-                    this.serverProcess.kill('SIGKILL');
+            // Wait for graceful shutdown (max 2 seconds)
+            await new Promise(resolve => {
+                const timeout = setTimeout(() => {
+                    // Force kill if doesn't exit gracefully
+                    if (this.serverProcess && this.serverProcess.exitCode === null) {
+                        this.serverProcess.kill('SIGKILL');
+                    }
+                    resolve();
+                }, 2000);
+
+                // If process exits before timeout, clear timeout and resolve
+                if (this.serverProcess) {
+                    this.serverProcess.once('exit', () => {
+                        clearTimeout(timeout);
+                        resolve();
+                    });
                 }
-            }, 2000);
+            });
         }
     }
 }

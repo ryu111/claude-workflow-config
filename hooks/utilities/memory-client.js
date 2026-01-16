@@ -441,7 +441,18 @@ class MemoryClient {
             try {
                 await this.mcpClient.disconnect();
             } catch (error) {
-                // Ignore cleanup errors
+                // Log cleanup errors for debugging, but don't throw
+                const fs = require('fs').promises;
+                const path = require('path');
+                const logPath = path.join(process.env.HOME, '.claude/logs/mcp-disconnect.log');
+
+                try {
+                    const logEntry = `[${new Date().toISOString()}] MCP disconnect error: ${error.message}\n`;
+                    await fs.mkdir(path.dirname(logPath), { recursive: true });
+                    await fs.appendFile(logPath, logEntry);
+                } catch (logError) {
+                    // If logging fails, silently ignore
+                }
             }
             this.mcpClient = null;
         }

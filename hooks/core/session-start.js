@@ -1216,7 +1216,15 @@ async function executeSessionStart(context) {
                 await memoryClient.disconnect();
             }
         } catch (error) {
-            // Ignore cleanup errors silently
+            // Log cleanup errors for debugging
+            const logPath = path.join(require('os').homedir(), '.claude/logs/session-cleanup.log');
+            try {
+                const logEntry = `[${new Date().toISOString()}] Session cleanup error: ${error.message}\n${error.stack}\n`;
+                await fs.mkdir(path.dirname(logPath), { recursive: true });
+                await fs.appendFile(logPath, logEntry);
+            } catch (logError) {
+                // If logging fails, silently ignore
+            }
         }
     }
 }
