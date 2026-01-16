@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/sbu/.claude/hooks/inject-skills.sh"
+            "command": "/Users/sbu/.claude/hooks/skills/inject-skills.sh"
           }
         ]
       },
@@ -27,6 +27,33 @@
             "type": "command",
             "command": "node \"/Users/sbu/.claude/hooks/core/session-end.js\"",
             "timeout": 15
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/workflow/check-archive.sh",
+            "timeout": 3
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/workflow/cleanup-python.sh",
+            "timeout": 2
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/workflow/usage-report.sh",
+            "timeout": 3
           }
         ]
       }
@@ -77,7 +104,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/sbu/.claude/hooks/remind-review.sh",
+            "command": "/Users/sbu/.claude/hooks/workflow/remind-review.sh",
             "timeout": 2
           }
         ]
@@ -90,7 +117,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/sbu/.claude/hooks/tech-debt-reminder.sh",
+            "command": "/Users/sbu/.claude/hooks/workflow/tech-debt-reminder.sh",
             "timeout": 2
           }
         ]
@@ -108,6 +135,10 @@
     "ralph-loop@claude-plugins-official": true
   },
   "language": "繁體中文",
+  "statusLine": {
+    "type": "command",
+    "command": "/Users/sbu/.claude/hooks/ui/statusline.sh"
+  },
   "permissions": {
     "allow": [
       "Bash(git reset:*)"

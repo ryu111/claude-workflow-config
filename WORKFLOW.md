@@ -47,7 +47,7 @@
 │ • 設計架構       │       │ • 視覺規範      │       │ • 遵循規範       │
 │ • 產出 tasks.md │       │ • 互動流程      │       │ • 建立/修改檔案  │
 │                 │       │                 │       │                 │
-│ model: sonnet   │       │ model: sonnet   │       │ model: sonnet   │
+│ model: opus     │       │ model: sonnet   │       │ model: sonnet   │
 │ skills: ux      │       │ skills: ui, ux  │       │ skills: ui      │
 └─────────────────┘       └─────────────────┘       └─────────────────┘
 
@@ -60,8 +60,8 @@
 │ • DRY 檢查      │       │ • 回報問題      │       │ • 建議修復       │
 │ • 品質把關       │       │                 │       │                 │
 │                 │       │                 │       │                 │
-│ model: opus    │       │ model: sonnet   │       │ model: sonnet   │
-│ (最嚴格)        │       │                 │       │                 │
+│ model: sonnet   │       │ model: haiku    │       │ model: sonnet   │
+│ (嚴格審查)      │       │ (快速執行)      │       │                 │
 └─────────────────┘       └─────────────────┘       └─────────────────┘
 ```
 
