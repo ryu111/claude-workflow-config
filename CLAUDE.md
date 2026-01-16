@@ -293,15 +293,20 @@ Main Agent 遇到任務時，先識別應使用的流程：
 
 | 關鍵字 | Agent |
 |--------|-------|
-| 規劃, plan | 🏗️ ARCHITECT |
-| 建立 skill, 新增 skill, 研究工具 | 📚 SKILLS |
+| 規劃, plan, 架構, 分析需求 | 🏗️ ARCHITECT |
+| skill 相關（建立/維護/檢查/研究） | 📚 SKILLS |
+| agent 相關（建立/維護/檢查/研究） | 📚 SKILLS |
 | 設計流程, 新增工作流, 驗證 skill | 🔄 WORKFLOW |
 | 遷移, 替換, 升級, migrate | 🔀 MIGRATION |
-| 設計, design, UI, UX, 介面 | 🎨 DESIGNER |
-| 實作, implement | 💻 DEVELOPER |
-| 審查, review | 🔍 REVIEWER |
-| 測試, test | 🧪 TESTER |
-| debug, 除錯 | 🐛 DEBUGGER |
+| 設計, design, UI, UX, 介面, 樣式, 佈局 | 🎨 DESIGNER |
+| 實作, implement, 開發, 寫程式, 新增功能 | 💻 DEVELOPER |
+| 審查, review, 程式碼品質 | 🔍 REVIEWER |
+| 測試, test, 驗證, QA | 🧪 TESTER |
+| debug, 除錯, 修復 bug, 錯誤排查, 問題排查 | 🐛 DEBUGGER |
+
+**Agent 選擇原則**：根據**任務涉及的領域**決定，而非只看動詞。
+- 「檢查 skills 規範」→ 涉及 skills 領域 → 📚 SKILLS
+- 「檢查程式碼品質」→ 涉及程式碼 → 🔍 REVIEWER
 
 ### Subagent 角色說明
 
@@ -320,6 +325,7 @@ Main Agent 遇到任務時，先識別應使用的流程：
 | Skill | Agent | 用途 |
 |-------|-------|------|
 | **dev** | DEVELOPER | Clean Code、設計模式、安全、效能 |
+| **refactor** | DEVELOPER | Code Smells 識別、70+ 重構技術、安全重構流程 |
 | **review** | REVIEWER | Code Smells、OWASP、SOLID |
 | **testing** | TESTER | 測試策略、Mock、邊界測試 |
 | **ui** | DESIGNER | 視覺設計規範 |

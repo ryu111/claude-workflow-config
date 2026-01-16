@@ -354,25 +354,7 @@ Git commit: "chore: archive [change-id]"
 
 ## 🧹 清理流程（Cleanup）
 
-**歸檔後必須執行清理**，釋放空間並整理專案結構。
-
-### 快速清理命令
-
-```bash
-# 刪除快取和臨時檔案
-find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null; \
-find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null; \
-find . -type f -name "*.pyc" -delete 2>/dev/null; \
-rm -rf .playwright-mcp/ htmlcov/ .coverage 2>/dev/null
-```
-
-### 清理分類
-
-| 類型 | 處理 | 範例 |
-|------|------|------|
-| **刪除** | 快取、臨時檔 | `__pycache__/`, `.pytest_cache/`, `*.pyc` |
-| **歸檔** | 報告、舊文檔 | `TASK_*.md` → `docs/archive/task-reports/` |
-| **保留** | 原始碼、配置 | `src/`, `tests/`, `*.py` |
+歸檔後執行清理，釋放空間。清理分為：刪除（快取）、歸檔（報告）、保留（原始碼）。
 
 For complete cleanup rules → read `references/cleanup.md`
 
@@ -380,67 +362,19 @@ For complete cleanup rules → read `references/cleanup.md`
 
 ```
 1. 所有任務完成 ✅
-2. 【必須】執行歸檔：
-   openspec archive [id] --yes
-3. 🧹 執行清理（參考 references/cleanup.md）
-4. 📝 檢查開發筆記（參考 references/dev-notes.md）
-5. 輸出最終報告（含筆記提醒）
-6. 【最後】輸出 <promise>ALL TASKS COMPLETED</promise>
+2. openspec archive [id] --yes
+3. 執行清理（references/cleanup.md）
+4. 檢查開發筆記（references/dev-notes.md）
+5. 輸出 <promise>ALL TASKS COMPLETED</promise>
 ```
 
-**順序很重要**：歸檔必須在 promise 輸出前完成！Hook 會在 session 結束時檢查。
+**順序很重要**：歸檔必須在 promise 輸出前完成！
 
 ## 📝 開發筆記（Dev Notes）
 
-**執行過程中想到但不需當下處理的事項，統一記錄到專案筆記本！**
+執行過程中想到但不需當下處理的事項，記錄到 `openspec/changes/[change-id]/notes.md`。
 
-### 筆記本位置
-
-```
-project/
-└── openspec/
-    └── changes/
-        └── [change-id]/
-            └── notes.md    ← 開發筆記本
-```
-
-### 記錄時機
-
-| 情況 | 範例 | 處理 |
-|------|------|------|
-| 發現可優化但非必要 | 「這個函數可以重構」 | 📝 記錄 |
-| 想到相關功能 | 「未來可以加入 X 功能」 | 📝 記錄 |
-| 技術債 | 「這裡用 workaround，之後要改」 | 📝 記錄 |
-| 文檔待補 | 「需要補充 API 文檔」 | 📝 記錄 |
-| 測試待加 | 「邊界情況需要更多測試」 | 📝 記錄 |
-
-### 記錄格式
-
-```markdown
-# 開發筆記 - [change-id]
-
-## 優化建議
-- [ ] src/api/user.ts:45 - 可以用 memoization 優化
-- [ ] src/services/auth.ts - 錯誤處理可以更細緻
-
-## 未來功能
-- [ ] 加入批次處理 API
-- [ ] 支援多語言
-
-## 技術債
-- [ ] src/utils/helper.ts - 臨時解法，需要重構
-
-## 文檔待補
-- [ ] API 文檔需要範例
-- [ ] 部署流程文檔
-```
-
-### 結束時提醒
-
-工作流結束時，必須：
-1. 讀取 `notes.md`
-2. 在最終報告中列出所有筆記
-3. 詢問用戶是否要處理或保留
+工作流結束時會提醒用戶處理筆記內容。
 
 For complete dev notes guide → read `references/dev-notes.md`
 
