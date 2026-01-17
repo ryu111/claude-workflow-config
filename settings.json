@@ -87,6 +87,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matchers": ["Task"],
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/workflow/check-core-skill.sh",
+            "timeout": 2
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
@@ -96,6 +106,38 @@
             "type": "command",
             "command": "node \"/Users/sbu/.claude/hooks/core/mid-conversation.js\"",
             "timeout": 8
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/workflow/loop-continue-reminder.sh",
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/workflow/pre-compact-save.sh",
+            "timeout": 3,
+            "statusMessage": "備份 Loop 狀態..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/workflow/stop-save-progress.sh",
+            "timeout": 3
           }
         ]
       }
@@ -112,6 +154,21 @@
             "type": "command",
             "command": "node \"/Users/sbu/.claude/hooks/core/auto-capture-hook.js\"",
             "timeout": 5
+          }
+        ]
+      },
+      {
+        "matchers": [
+          "Edit",
+          "Write",
+          "Bash",
+          "Task"
+        ],
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/workflow/loop-heartbeat.sh",
+            "timeout": 1
           }
         ]
       },

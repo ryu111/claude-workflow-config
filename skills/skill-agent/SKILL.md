@@ -324,7 +324,7 @@ pdf-processing/
 name: agent-name           # 小寫，連字號分隔
 description: 角色描述       # 簡短說明角色職責
 model: sonnet              # 可選：sonnet, opus, haiku
-skills: skill1, skill2     # 可選：自動載入的 skills
+skills: core, skill1       # 必須包含 core！
 ---
 
 # Agent Title
@@ -339,7 +339,19 @@ skills: skill1, skill2     # 可選：自動載入的 skills
 | `name` | ✅ | 小寫，用連字號分隔 |
 | `description` | ✅ | 角色職責描述 |
 | `model` | ❌ | 預設 sonnet |
-| `skills` | ❌ | 自動載入的 skills |
+| `skills` | ⚠️ | **必須包含 `core`**，確保核心規則載入 |
+
+**⚠️ 重要：所有 Agent 必須在 skills 欄位包含 `core`**
+
+```yaml
+# ✅ 正確
+skills: core, dev, ui
+
+# ❌ 錯誤（缺少 core）
+skills: dev, ui
+```
+
+`core` skill 包含：D→R→T 工作流、禁止硬編碼、回歸測試、狀態顯示格式。
 
 ### Agent vs Skill 選擇
 

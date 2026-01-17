@@ -1,6 +1,6 @@
 # Workflow Execution Rules
 
-詳細的工作流執行規則。快速參考請見 CLAUDE.md。
+詳細的工作流執行規則。快速參考請見 `core` 和 `main` skills。
 
 ## 關鍵字觸發機制
 
@@ -105,6 +105,25 @@
 **雙軌同步：**
 - `tasks.md` checkbox → 支援斷點恢復
 - `TodoWrite` 工具 → 用戶即時查看進度
+
+## 進度保存規則（防止中斷丟失）
+
+**每個任務完成後必須執行：**
+
+```
+1. 更新 tasks.md checkbox ✅
+2. git add . && git commit -m "progress: Task X.X completed"
+```
+
+**為什麼要這樣做？**
+- Session 可能因為 context 壓縮、用戶中斷、斷線等原因意外結束
+- 如果沒有 commit，所有進度都只存在於 session 中
+- commit 後即使 session 丟失，程式碼變更仍然保留
+
+**注意事項：**
+- 只 commit 已完成且通過測試的任務
+- commit message 使用 `progress:` 前綴，方便識別
+- 如果任務失敗，不要 commit 半成品
 
 ## Task Tool 使用範例
 
