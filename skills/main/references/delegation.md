@@ -82,6 +82,7 @@ D → R → T                          # 實作
 | 設計流程, 新增工作流, 驗證 skill | 🔄 WORKFLOW | 工作流驗證 |
 | 遷移, 替換, 升級, migrate | 🔀 MIGRATION | 遷移規劃 |
 | 設計, design, UI, UX, 介面, 樣式, 佈局 | 🎨 DESIGNER | UI/UX 設計 |
+| **[產品] 的 UI, [產品] 風格, 設計 [產品]** | 🎨 DESIGNER | **多風格提案** |
 | 實作, implement, 開發, 寫程式, 新增功能 | 💻 DEVELOPER | 程式碼實作 |
 | 審查, review, 程式碼品質 | 🔍 REVIEWER | 程式碼審查 |
 | 測試, test, 驗證, QA | 🧪 TESTER | 測試驗證 |
