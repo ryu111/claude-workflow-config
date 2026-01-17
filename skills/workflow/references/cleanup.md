@@ -21,7 +21,7 @@
 | 編譯檔案 | `*.pyc`, `*.pyo` | 可重新生成 |
 | Pytest 快取 | `.pytest_cache/` | 測試快取 |
 | 覆蓋率快取 | `.coverage`, `htmlcov/` | 可重新生成 |
-| Playwright 截圖 | `.playwright-mcp/` | 臨時測試截圖 |
+| 瀏覽器截圖 | `.agent-browser/` | 臨時測試截圖 |
 | Node 快取 | `node_modules/.cache/` | 依賴快取 |
 | IDE 設定 | `.idea/`, `.vscode/` (部分) | 個人偏好 |
 | 系統檔案 | `.DS_Store`, `Thumbs.db` | 系統垃圾 |
@@ -39,8 +39,8 @@ find . -type f -name "*.pyo" -delete 2>/dev/null
 find . -type f -name ".coverage" -delete 2>/dev/null
 rm -rf htmlcov/ 2>/dev/null
 
-# Playwright / 測試截圖
-rm -rf .playwright-mcp/ 2>/dev/null
+# 瀏覽器測試截圖
+rm -rf .agent-browser/ 2>/dev/null
 
 # 系統檔案
 find . -type f -name ".DS_Store" -delete 2>/dev/null
@@ -199,7 +199,7 @@ mv BACKTEST_*.md reports/archive/backtest/ 2>/dev/null
 【刪除項目】
   🗑️ __pycache__/: XX 個目錄
   🗑️ .pytest_cache/: X 個目錄
-  🗑️ .playwright-mcp/: XX 張截圖
+  🗑️ .agent-browser/: XX 張截圖
   🗑️ *.pyc: X 個檔案
   🗑️ .coverage: 1 個檔案
 
@@ -260,7 +260,7 @@ find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null; \
 find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null; \
 find . -type f -name "*.pyc" -delete 2>/dev/null; \
 find . -type f -name ".coverage" -delete 2>/dev/null; \
-rm -rf .playwright-mcp/ htmlcov/ 2>/dev/null; \
+rm -rf .agent-browser/ htmlcov/ 2>/dev/null; \
 find . -type f -name ".DS_Store" -delete 2>/dev/null
 ```
 

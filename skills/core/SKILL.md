@@ -1,0 +1,98 @@
+---
+name: core
+description: 所有 agents 共用的核心規則。D→R→T 工作流、禁止硬編碼、回歸測試、狀態顯示格式。
+---
+
+# Core Rules（核心規則）
+
+所有 agents 必須遵守的基本規則。
+
+## ⛔ 三大原則
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  1. 任何程式碼修改 = 必須經過 R→T                          │
+│     沒有例外！沒有捷徑！「簡單」不是跳過的理由！           │
+│                                                            │
+│  2. 發現問題即修復，不分任務範圍                           │
+│     ❌「不是我的 bug」 ❌「預存在問題」 ❌「不在範圍」       │
+│                                                            │
+│  3. 禁止硬編碼 → 使用語言特性定義常數                      │
+│     ❌ "status" / "pending" / 7 (magic number)             │
+│     ✅ enum / const / Literal / TypedDict                  │
+└────────────────────────────────────────────────────────────┘
+```
+
+## D→R→T 工作流
+
+```
+D = Task(subagent_type: "developer")  → 寫程式碼
+R = Task(subagent_type: "reviewer")   → 審查程式碼
+T = Task(subagent_type: "tester")     → 測試程式碼
+```
+
+### 三種合法路徑
+
+| 路徑 | 說明 | 適用場景 |
+|------|------|----------|
+| Main → R → T | Main agent 直接修復 | 簡單修復 |
+| Design → R → T | Designer 設計後實作 | UI 任務 |
+| D → R → T | Developer 開發 | 一般開發 |
+
+**共同點：都必須經過 R→T**
+
+詳細規則 → `references/drt-rules.md`
+
+## Subagent 角色說明
+
+**D→R→T 規則是給 Main Agent 的，不是給 Subagent 的！**
+
+| 被呼叫為 | 你應該做 | 你不應該做 |
+|----------|----------|-----------|
+| `developer` | 直接寫程式碼 | 再呼叫 Task(developer) |
+| `reviewer` | 直接審查 | 再呼叫 Task(reviewer) |
+| `tester` | 直接測試 | 再呼叫 Task(tester) |
+
+## Agent 狀態顯示
+
+每個 Agent 啟動和結束時，必須顯示明確狀態。
+
+### 啟動時格式
+```markdown
+## 🏗️ ARCHITECT 開始規劃 [任務描述]
+## 💻 DEVELOPER 開始實作 [Task X.X - 任務名稱]
+## 🔍 REVIEWER 開始審查 [檔案/模組名稱]
+## 🧪 TESTER 開始測試 [測試範圍]
+## 🐛 DEBUGGER 開始除錯 [問題描述]
+## 🎨 DESIGNER 開始設計 [UI/UX 範圍]
+```
+
+### 結束時格式
+```markdown
+## ✅ 💻 DEVELOPER 完成 Task 1.1。啟動 🔍 R → 🧪 T
+## ✅ 🔍 REVIEWER 通過審查。啟動 🧪 TESTER
+## ✅ 🧪 TESTER 通過 (15/15 tests)。Task 1.1 完成
+## ❌ 🔍 REVIEWER 發現 2 個問題。返回 💻 DEVELOPER 修復
+```
+
+詳細格式 → `references/status-display.md`
+
+## Quick Reference
+
+| 規則 | 詳細文檔 |
+|------|----------|
+| D→R→T 詳細規則 | `references/drt-rules.md` |
+| 禁止硬編碼指南 | `references/no-hardcoding.md` |
+| 回歸測試要求 | `references/regression.md` |
+| 狀態顯示格式 | `references/status-display.md` |
+| **發現即修復** | `references/fix-on-discovery.md` |
+
+## Hook 強制機制
+
+以下規則有 Hook 自動提醒：
+
+| 規則 | Hook | 觸發時機 |
+|------|------|----------|
+| 發現即修復 | `fix-on-discovery.sh` | Bash (pyright/eslint/等) |
+| D→R→T 工作流 | `remind-review.sh` | Edit/Write |
+| 回歸測試 | 由 TESTER agent 強制 | 測試階段 |

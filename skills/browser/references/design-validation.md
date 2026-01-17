@@ -160,36 +160,35 @@ const validationPlan = {
 
 ```javascript
 // 1. 導航到頁面
-browser_navigate(url: "http://localhost:3000/validation")
-browser_snapshot()
+agent navigate http://localhost:3000/validation
 
-// 2. 驗證 Title 使用 token
-browser_evaluate(
-  element: "page title",
-  ref: "s1e2",
-  function: `(element) => {
-    const computed = window.getComputedStyle(element);
-    const root = window.getComputedStyle(document.documentElement);
+// 2. 擷取頁面
+agent capture
 
-    return {
-      // 字體大小
-      fontSize: computed.fontSize,
-      tokenTextXl: root.getPropertyValue('--text-2xl').trim(),
-      fontSizeMatches: computed.fontSize === root.getPropertyValue('--text-2xl').trim(),
+// 3. 驗證 Title 使用 token
+// @ref s1e2
+agent evaluate --element "page title" --function `(element) => {
+  const computed = window.getComputedStyle(element);
+  const root = window.getComputedStyle(document.documentElement);
 
-      // 字體粗細
-      fontWeight: computed.fontWeight,
-      tokenSemibold: root.getPropertyValue('--font-semibold').trim(),
-      fontWeightMatches: computed.fontWeight === root.getPropertyValue('--font-semibold').trim(),
+  return {
+    // 字體大小
+    fontSize: computed.fontSize,
+    tokenTextXl: root.getPropertyValue('--text-2xl').trim(),
+    fontSizeMatches: computed.fontSize === root.getPropertyValue('--text-2xl').trim(),
 
-      // 檢查是否使用 var()
-      usesVariables: {
-        fontSize: computed.getPropertyValue('font-size').includes('var('),
-        fontWeight: computed.getPropertyValue('font-weight').includes('var(')
-      }
-    };
-  }`
-)
+    // 字體粗細
+    fontWeight: computed.fontWeight,
+    tokenSemibold: root.getPropertyValue('--font-semibold').trim(),
+    fontWeightMatches: computed.fontWeight === root.getPropertyValue('--font-semibold').trim(),
+
+    // 檢查是否使用 var()
+    usesVariables: {
+      fontSize: computed.getPropertyValue('font-size').includes('var('),
+      fontWeight: computed.getPropertyValue('font-weight').includes('var(')
+    }
+  };
+}`
 
 // 預期結果：
 // ✅ {
@@ -205,81 +204,75 @@ browser_evaluate(
 **更準確的 Token 檢測**：
 
 ```javascript
-browser_evaluate(
-  element: "card",
-  ref: "s1e5",
-  function: `(element) => {
-    // 方法 1：檢查 inline style（如果元件直接設定）
-    const inlineStyle = element.style.backgroundColor;
+// @ref s1e5
+agent evaluate --element "card" --function `(element) => {
+  // 方法 1：檢查 inline style（如果元件直接設定）
+  const inlineStyle = element.style.backgroundColor;
 
-    // 方法 2：檢查 stylesheet 規則（更準確）
-    const sheets = Array.from(document.styleSheets);
-    let usesToken = false;
+  // 方法 2：檢查 stylesheet 規則（更準確）
+  const sheets = Array.from(document.styleSheets);
+  let usesToken = false;
 
-    for (const sheet of sheets) {
-      try {
-        const rules = Array.from(sheet.cssRules || sheet.rules || []);
-        for (const rule of rules) {
-          if (rule.style && rule.selectorText) {
-            // 檢查選擇器是否匹配此元素
-            if (element.matches(rule.selectorText)) {
-              const bg = rule.style.backgroundColor;
-              if (bg && bg.includes('var(')) {
-                usesToken = true;
-                break;
-              }
+  for (const sheet of sheets) {
+    try {
+      const rules = Array.from(sheet.cssRules || sheet.rules || []);
+      for (const rule of rules) {
+        if (rule.style && rule.selectorText) {
+          // 檢查選擇器是否匹配此元素
+          if (element.matches(rule.selectorText)) {
+            const bg = rule.style.backgroundColor;
+            if (bg && bg.includes('var(')) {
+              usesToken = true;
+              break;
             }
           }
         }
-      } catch (e) {
-        // CORS 問題，跳過
       }
+    } catch (e) {
+      // CORS 問題，跳過
     }
+  }
 
-    // 方法 3：檢查 computed value 是否符合 token
-    const computed = window.getComputedStyle(element);
-    const root = window.getComputedStyle(document.documentElement);
-    const tokenValue = root.getPropertyValue('--color-surface').trim();
+  // 方法 3：檢查 computed value 是否符合 token
+  const computed = window.getComputedStyle(element);
+  const root = window.getComputedStyle(document.documentElement);
+  const tokenValue = root.getPropertyValue('--color-surface').trim();
 
-    return {
-      computedBg: computed.backgroundColor,
-      tokenValue: tokenValue,
-      valuesMatch: computed.backgroundColor === tokenValue,
-      usesToken: usesToken
-    };
-  }`
-)
+  return {
+    computedBg: computed.backgroundColor,
+    tokenValue: tokenValue,
+    valuesMatch: computed.backgroundColor === tokenValue,
+    usesToken: usesToken
+  };
+}`
 ```
 
 ### 3.2 驗證顏色
 
 ```javascript
 // 驗證所有主按鈕使用 --color-primary
-browser_evaluate(
-  element: "page container",
-  ref: "s1e1",
-  function: `(element) => {
-    const root = window.getComputedStyle(document.documentElement);
-    const primaryColor = root.getPropertyValue('--color-primary').trim();
+// @ref s1e1
+agent evaluate --element "page container" --function `(element) => {
+  const root = window.getComputedStyle(document.documentElement);
+  const primaryColor = root.getPropertyValue('--color-primary').trim();
 
-    const buttons = Array.from(element.querySelectorAll('button.primary'));
+  const buttons = Array.from(element.querySelectorAll('button.primary'));
 
-    const results = buttons.map(btn => {
-      const bg = window.getComputedStyle(btn).backgroundColor;
-      return {
-        text: btn.textContent.trim(),
-        bg: bg,
-        matchesToken: bg === primaryColor
-      };
-    });
-
+  const results = buttons.map(btn => {
+    const bg = window.getComputedStyle(btn).backgroundColor;
     return {
-      expectedColor: primaryColor,
-      buttons: results,
-      allMatch: results.every(r => r.matchesToken)
+      text: btn.textContent.trim(),
+      bg: bg,
+      matchesToken: bg === primaryColor
     };
-  }`
-)
+  });
+
+  return {
+    expectedColor: primaryColor,
+    buttons: results,
+    allMatch: results.every(r => r.matchesToken)
+  };
+}`
 
 // ✅ 預期：{ allMatch: true }
 // ❌ Bug：{ allMatch: false, buttons: [...] }
@@ -289,57 +282,51 @@ browser_evaluate(
 
 ```javascript
 // 驗證所有 h1 使用正確字體規格
-browser_evaluate(
-  element: "page container",
-  ref: "s1e1",
-  function: `(element) => {
-    const root = window.getComputedStyle(document.documentElement);
-    const expectedSize = root.getPropertyValue('--text-2xl').trim();
-    const expectedWeight = root.getPropertyValue('--font-semibold').trim();
+// @ref s1e1
+agent evaluate --element "page container" --function `(element) => {
+  const root = window.getComputedStyle(document.documentElement);
+  const expectedSize = root.getPropertyValue('--text-2xl').trim();
+  const expectedWeight = root.getPropertyValue('--font-semibold').trim();
 
-    const headings = Array.from(element.querySelectorAll('h1'));
+  const headings = Array.from(element.querySelectorAll('h1'));
 
-    const results = headings.map(h => {
-      const style = window.getComputedStyle(h);
-      return {
-        text: h.textContent.slice(0, 30),
-        fontSize: style.fontSize,
-        fontWeight: style.fontWeight,
-        sizeCorrect: style.fontSize === expectedSize,
-        weightCorrect: style.fontWeight === expectedWeight
-      };
-    });
-
+  const results = headings.map(h => {
+    const style = window.getComputedStyle(h);
     return {
-      expected: { size: expectedSize, weight: expectedWeight },
-      headings: results,
-      allCorrect: results.every(r => r.sizeCorrect && r.weightCorrect)
+      text: h.textContent.slice(0, 30),
+      fontSize: style.fontSize,
+      fontWeight: style.fontWeight,
+      sizeCorrect: style.fontSize === expectedSize,
+      weightCorrect: style.fontWeight === expectedWeight
     };
-  }`
-)
+  });
+
+  return {
+    expected: { size: expectedSize, weight: expectedWeight },
+    headings: results,
+    allCorrect: results.every(r => r.sizeCorrect && r.weightCorrect)
+  };
+}`
 ```
 
 ### 3.4 驗證間距
 
 ```javascript
 // 驗證 Grid gap 使用 --spacing-lg (24px)
-browser_evaluate(
-  element: "grid container",
-  ref: "s1e10",
-  function: `(element) => {
-    const root = window.getComputedStyle(document.documentElement);
-    const expectedGap = root.getPropertyValue('--spacing-lg').trim();
+// @ref s1e10
+agent evaluate --element "grid container" --function `(element) => {
+  const root = window.getComputedStyle(document.documentElement);
+  const expectedGap = root.getPropertyValue('--spacing-lg').trim();
 
-    const style = window.getComputedStyle(element);
-    const actualGap = style.gap || style.gridGap;
+  const style = window.getComputedStyle(element);
+  const actualGap = style.gap || style.gridGap;
 
-    return {
-      expectedGap: expectedGap,
-      actualGap: actualGap,
-      matches: actualGap === expectedGap
-    };
-  }`
-)
+  return {
+    expectedGap: expectedGap,
+    actualGap: actualGap,
+    matches: actualGap === expectedGap
+  };
+}`
 
 // ✅ 預期：{ matches: true }
 ```
@@ -362,35 +349,31 @@ browser_evaluate(
 
 ```javascript
 // 1. 記錄初始狀態
-browser_snapshot()
-browser_evaluate(
-  element: "primary button",
-  ref: "s1e15",
-  function: "(element) => window.getComputedStyle(element).backgroundColor"
-)
+agent capture
+
+// @ref s1e15
+agent evaluate --element "primary button" --function "(element) => window.getComputedStyle(element).backgroundColor"
 // 初始：rgb(59, 130, 246)
 
 // 2. Hover
-browser_hover(element: "primary button", ref: "s1e15")
+// @ref s1e15
+agent hover --element "primary button"
 
 // 3. 驗證變化
-browser_evaluate(
-  element: "primary button",
-  ref: "s1e15",
-  function: `(element) => {
-    const style = window.getComputedStyle(element);
-    const bg = style.backgroundColor;
+// @ref s1e15
+agent evaluate --element "primary button" --function `(element) => {
+  const style = window.getComputedStyle(element);
+  const bg = style.backgroundColor;
 
-    // 驗證顏色是否變深
-    const [r, g, b] = bg.match(/\\d+/g).map(Number);
-    const isDarker = (r < 59 || g < 130 || b < 246);
+  // 驗證顏色是否變深
+  const [r, g, b] = bg.match(/\\d+/g).map(Number);
+  const isDarker = (r < 59 || g < 130 || b < 246);
 
-    return {
-      hoverBg: bg,
-      isDarker: isDarker
-    };
-  }`
-)
+  return {
+    hoverBg: bg,
+    isDarker: isDarker
+  };
+}`
 
 // ✅ 預期：{ isDarker: true }
 ```
@@ -407,26 +390,24 @@ browser_evaluate(
 **驗證腳本**：
 
 ```javascript
-browser_click(element: "email input", ref: "s1e8")
+// @ref s1e8
+agent click --element "email input"
 
-browser_evaluate(
-  element: "email input",
-  ref: "s1e8",
-  function: `(element) => {
-    const style = window.getComputedStyle(element);
-    const root = window.getComputedStyle(document.documentElement);
+// @ref s1e8
+agent evaluate --element "email input" --function `(element) => {
+  const style = window.getComputedStyle(element);
+  const root = window.getComputedStyle(document.documentElement);
 
-    return {
-      outline: style.outline,
-      outlineWidth: style.outlineWidth,
-      outlineOffset: style.outlineOffset,
-      outlineColor: style.outlineColor,
-      expectedColor: root.getPropertyValue('--color-primary').trim(),
-      isFocused: document.activeElement === element,
-      meetsSpec: style.outlineWidth === '2px' && style.outlineOffset === '2px'
-    };
-  }`
-)
+  return {
+    outline: style.outline,
+    outlineWidth: style.outlineWidth,
+    outlineOffset: style.outlineOffset,
+    outlineColor: style.outlineColor,
+    expectedColor: root.getPropertyValue('--color-primary').trim(),
+    isFocused: document.activeElement === element,
+    meetsSpec: style.outlineWidth === '2px' && style.outlineOffset === '2px'
+  };
+}`
 
 // ✅ 預期：{ meetsSpec: true, isFocused: true }
 ```
@@ -446,28 +427,26 @@ browser_evaluate(
 
 ```javascript
 // 1. 觸發 loading
-browser_click(element: "submit button", ref: "s1e15")
+// @ref s1e15
+agent click --element "submit button"
 
 // 2. 立即驗證
-browser_wait_for(text: "Loading")
+agent wait --text "Loading"
 
-browser_snapshot()
+agent capture
 // 應該看到：
 // - spinner [ref=s2e1]
 // - button "Loading..." [aria-busy=true, disabled, ref=s2e2]
 
 // 3. 驗證按鈕狀態
-browser_evaluate(
-  element: "submit button",
-  ref: "s2e2",
-  function: `(element) => {
-    return {
-      disabled: element.disabled,
-      ariaBusy: element.getAttribute('aria-busy'),
-      textContent: element.textContent.trim()
-    };
-  }`
-)
+// @ref s2e2
+agent evaluate --element "submit button" --function `(element) => {
+  return {
+    disabled: element.disabled,
+    ariaBusy: element.getAttribute('aria-busy'),
+    textContent: element.textContent.trim()
+  };
+}`
 
 // ✅ 預期：
 // {
@@ -492,35 +471,35 @@ browser_evaluate(
 
 ```javascript
 // 1. 提交無效資料
-browser_type(element: "email input", ref: "s1e8", text: "invalid")
-browser_click(element: "submit button", ref: "s1e15")
+// @ref s1e8
+agent type --element "email input" --text "invalid"
+
+// @ref s1e15
+agent click --element "submit button"
 
 // 2. 等待錯誤訊息
-browser_wait_for(text: "Invalid email format")
+agent wait --text "Invalid email format"
 
-// 3. 驗證視覺和無障礙
-browser_snapshot()
+agent capture
 // 應該看到：
 // - textbox "Email" [aria-invalid=true, ref=s2e8]
 // - text "Invalid email format" [role=alert, ref=s2e9]
 
-browser_evaluate(
-  element: "email input",
-  ref: "s2e8",
-  function: `(element) => {
-    const style = window.getComputedStyle(element);
-    const root = window.getComputedStyle(document.documentElement);
-    const errorColor = root.getPropertyValue('--color-error').trim();
+// 3. 驗證視覺和無障礙
+// @ref s2e8
+agent evaluate --element "email input" --function `(element) => {
+  const style = window.getComputedStyle(element);
+  const root = window.getComputedStyle(document.documentElement);
+  const errorColor = root.getPropertyValue('--color-error').trim();
 
-    return {
-      borderColor: style.borderColor,
-      expectedColor: errorColor,
-      ariaInvalid: element.getAttribute('aria-invalid'),
-      ariaDescribedBy: element.getAttribute('aria-describedby'),
-      meetsSpec: element.getAttribute('aria-invalid') === 'true'
-    };
-  }`
-)
+  return {
+    borderColor: style.borderColor,
+    expectedColor: errorColor,
+    ariaInvalid: element.getAttribute('aria-invalid'),
+    ariaDescribedBy: element.getAttribute('aria-describedby'),
+    meetsSpec: element.getAttribute('aria-invalid') === 'true'
+  };
+}`
 
 // ✅ 預期：
 // {
@@ -547,58 +526,54 @@ browser_evaluate(
 
 ```javascript
 // ========== Mobile 驗證 ==========
-browser_resize(width: 375, height: 667)
-browser_snapshot()
+agent resize --width 375 --height 667
+
+agent capture
 
 // 驗證單欄佈局
-browser_evaluate(
-  element: "grid container",
-  ref: "s1e10",
-  function: `(element) => {
-    const style = window.getComputedStyle(element);
-    const columns = style.gridTemplateColumns;
-    const columnCount = columns.split(' ').filter(c => c.includes('fr') || c.includes('px')).length;
+// @ref s1e10
+agent evaluate --element "grid container" --function `(element) => {
+  const style = window.getComputedStyle(element);
+  const columns = style.gridTemplateColumns;
+  const columnCount = columns.split(' ').filter(c => c.includes('fr') || c.includes('px')).length;
 
-    return {
-      gridTemplateColumns: columns,
-      columnCount: columnCount,
-      isSingleColumn: columnCount === 1
-    };
-  }`
-)
+  return {
+    gridTemplateColumns: columns,
+    columnCount: columnCount,
+    isSingleColumn: columnCount === 1
+  };
+}`
 
 // ✅ 預期：{ isSingleColumn: true }
 
 // 驗證導航堆疊
-browser_snapshot()
+agent capture
 // 應該看到：
 // - button "Menu" [ref=s1e1] (漢堡選單)
 
 // ========== Desktop 驗證 ==========
-browser_resize(width: 1280, height: 800)
-browser_snapshot()
+agent resize --width 1280 --height 800
+
+agent capture
 
 // 驗證雙欄佈局
-browser_evaluate(
-  element: "grid container",
-  ref: "s2e10",
-  function: `(element) => {
-    const style = window.getComputedStyle(element);
-    const columns = style.gridTemplateColumns;
-    const columnCount = columns.split(' ').filter(c => c.includes('fr') || c.includes('px')).length;
+// @ref s2e10
+agent evaluate --element "grid container" --function `(element) => {
+  const style = window.getComputedStyle(element);
+  const columns = style.gridTemplateColumns;
+  const columnCount = columns.split(' ').filter(c => c.includes('fr') || c.includes('px')).length;
 
-    return {
-      gridTemplateColumns: columns,
-      columnCount: columnCount,
-      isTwoColumns: columnCount === 2
-    };
-  }`
-)
+  return {
+    gridTemplateColumns: columns,
+    columnCount: columnCount,
+    isTwoColumns: columnCount === 2
+  };
+}`
 
 // ✅ 預期：{ isTwoColumns: true }
 
 // 驗證水平導航
-browser_snapshot()
+agent capture
 // 應該看到：
 // - navigation [ref=s2e1]
 //   - link "Home"
@@ -616,19 +591,16 @@ const breakpoints = [
 ];
 
 for (const bp of breakpoints) {
-  browser_resize(width: bp.width, height: 800);
+  agent resize --width bp.width --height 800
 
-  browser_evaluate(
-    element: "body",
-    ref: "s1e0",
-    function: `() => {
-      return {
-        bodyScrollWidth: document.body.scrollWidth,
-        windowWidth: window.innerWidth,
-        hasHorizontalScroll: document.body.scrollWidth > window.innerWidth
-      };
-    }`
-  );
+  // @ref s1e0
+  agent evaluate --element "body" --function `() => {
+    return {
+      bodyScrollWidth: document.body.scrollWidth,
+      windowWidth: window.innerWidth,
+      hasHorizontalScroll: document.body.scrollWidth > window.innerWidth
+    };
+  }`
 
   // ✅ 所有斷點：{ hasHorizontalScroll: false }
 }
@@ -767,18 +739,14 @@ for (const bp of breakpoints) {
 
 ```javascript
 // 截圖失敗的 hover 狀態
-browser_hover(element: "primary button", ref: "s1e15")
-browser_take_screenshot(
-  element: "primary button",
-  ref: "s1e15",
-  filename: "screenshots/button-hover-fail.png"
-)
+// @ref s1e15
+agent hover --element "primary button"
+
+// @ref s1e15
+agent screenshot --element "primary button" --filename "screenshots/button-hover-fail.png"
 
 // 截圖整個頁面
-browser_take_screenshot(
-  filename: "screenshots/validation-page-overview.png",
-  fullPage: true
-)
+agent screenshot --fullpage --filename "screenshots/validation-page-overview.png"
 ```
 
 ---
@@ -795,72 +763,69 @@ browser_take_screenshot(
 // (建立 checklist)
 
 // ========== Step 3: 執行視覺驗證 ==========
-browser_navigate(url: "http://localhost:3000/login")
-browser_snapshot()
+agent navigate http://localhost:3000/login
+
+agent capture
 
 // 驗證容器
-browser_evaluate(
-  element: "login container",
-  ref: "s1e1",
-  function: `(element) => {
-    const style = window.getComputedStyle(element);
-    return {
-      maxWidth: style.maxWidth,
-      padding: style.padding
-    };
-  }`
-)
+// @ref s1e1
+agent evaluate --element "login container" --function `(element) => {
+  const style = window.getComputedStyle(element);
+  return {
+    maxWidth: style.maxWidth,
+    padding: style.padding
+  };
+}`
 // ✅ { maxWidth: "400px", padding: "32px" }
 
 // 驗證標題
-browser_evaluate(
-  element: "Login heading",
-  ref: "s1e2",
-  function: `(element) => {
-    const style = window.getComputedStyle(element);
-    return {
-      fontSize: style.fontSize,
-      fontWeight: style.fontWeight
-    };
-  }`
-)
+// @ref s1e2
+agent evaluate --element "Login heading" --function `(element) => {
+  const style = window.getComputedStyle(element);
+  return {
+    fontSize: style.fontSize,
+    fontWeight: style.fontWeight
+  };
+}`
 // ✅ { fontSize: "31.25px", fontWeight: "600" }
 
 // ========== Step 4: 執行互動驗證 ==========
 // Focus 狀態
-browser_click(element: "Email input", ref: "s1e3")
-browser_evaluate(
-  element: "Email input",
-  ref: "s1e3",
-  function: `(element) => {
-    const style = window.getComputedStyle(element);
-    return {
-      outline: style.outline,
-      outlineOffset: style.outlineOffset
-    };
-  }`
-)
+// @ref s1e3
+agent click --element "Email input"
+
+// @ref s1e3
+agent evaluate --element "Email input" --function `(element) => {
+  const style = window.getComputedStyle(element);
+  return {
+    outline: style.outline,
+    outlineOffset: style.outlineOffset
+  };
+}`
 // ❌ { outlineOffset: "0px" } (應為 "2px")
 
 // Error 狀態
-browser_type(element: "Email input", ref: "s1e3", text: "invalid")
-browser_click(element: "Login button", ref: "s1e5")
-browser_wait_for(text: "Invalid email")
-browser_snapshot()
+// @ref s1e3
+agent type --element "Email input" --text "invalid"
+
+// @ref s1e5
+agent click --element "Login button"
+
+agent wait --text "Invalid email"
+
+agent capture
 // ✅ textbox "Email" [aria-invalid=true]
 
 // ========== Step 5: 執行響應式驗證 ==========
-browser_resize(width: 375, height: 667)
-browser_evaluate(
-  element: "login container",
-  ref: "s1e1",
-  function: `(element) => {
-    return {
-      width: element.clientWidth,
-      padding: window.getComputedStyle(element).padding
-    };
-  }`
-)
+agent resize --width 375 --height 667
+
+// @ref s1e1
+agent evaluate --element "login container" --function `(element) => {
+  return {
+    width: element.clientWidth,
+    padding: window.getComputedStyle(element).padding
+  };
+}`
 // ✅ { width: 375, padding: "16px" } (mobile 較小 padding)
 
 // ========== Step 6: 產出報告 ==========
@@ -894,7 +859,7 @@ browser_evaluate(
 
 關鍵：
 1. **讀取規格** → 提取驗證點
-2. **執行驗證** → 使用 Playwright 檢測
+2. **執行驗證** → 使用 agent-browser 檢測
 3. **產出報告** → 記錄通過/失敗
 4. **截圖存證** → 方便修復
 

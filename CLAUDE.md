@@ -16,168 +16,14 @@
 
 # Global Claude Code Configuration
 
-## ⛔ 核心規則（必記！）
+## 必讀 Skills
 
-```
-┌────────────────────────────────────────────────────────────┐
-│  1. 任何程式碼修改 = 必須經過 R→T                          │
-│     沒有例外！沒有捷徑！「簡單」不是跳過的理由！           │
-│                                                            │
-│  2. 發現問題即修復，不分任務範圍                           │
-│     ❌「不是我的 bug」 ❌「預存在問題」 ❌「不在範圍」       │
-│                                                            │
-│  3. 禁止硬編碼 → 使用語言特性定義常數                      │
-│     ❌ "status" / "pending" / 7 (magic number)             │
-│     ✅ enum / const / Literal / TypedDict                  │
-└────────────────────────────────────────────────────────────┘
+| Skill | 內容 | 適用 |
+|-------|------|------|
+| **core** | D→R→T 工作流、禁止硬編碼、回歸測試、狀態顯示格式 | 所有 Agents |
+| **main** | 委派原則、並行化、流程識別 | Main Agent |
 
-D = Task(subagent_type: "developer")  → 寫程式碼
-R = Task(subagent_type: "reviewer")   → 審查程式碼
-T = Task(subagent_type: "tester")     → 測試程式碼
-
-三種合法路徑（都必須經過 R→T）：
-1. Main → R → T    （Main agent 直接修復）
-2. Design → R → T  （Designer 設計後實作）
-3. D → R → T       （Developer 開發）
-
-### 🧪 T 階段必須包含回歸測試
-
-```
-┌────────────────────────────────────────────────────────────┐
-│  T 階段 = 功能測試 + 回歸測試                               │
-│                                                            │
-│  1️⃣ 功能測試：針對新功能/修改的測試                        │
-│  2️⃣ 回歸測試：運行完整測試套件（pytest / npm test）        │
-│                                                            │
-│  ❌ 只跑功能測試 → 會導致「做 A 壞 B」                       │
-│  ✅ 功能 + 回歸 → 確保不破壞現有功能                        │
-└────────────────────────────────────────────────────────────┘
-```
-
-**TESTER 必須執行的測試順序：**
-1. `pytest` (全部) 或 `npm test` → 回歸測試
-2. 針對新功能的特定測試 → 功能測試
-3. 如果回歸測試失敗 → 立即停止，報告問題
-
-### 🚫 禁止硬編碼
-
-```
-┌────────────────────────────────────────────────────────────┐
-│  硬編碼 = 隱藏的 bug 來源                                   │
-│                                                            │
-│  問題：                                                     │
-│  • Typo 無法被編譯器/IDE 捕捉                              │
-│  • 重構時容易遺漏                                          │
-│  • 無法獲得自動完成                                        │
-│                                                            │
-│  解法：使用語言特性定義常數                                 │
-└────────────────────────────────────────────────────────────┘
-```
-
-| 語言 | 硬編碼 ❌ | 正確做法 ✅ |
-|------|----------|------------|
-| Python | `"pending"` | `Status.PENDING` (Enum) |
-| Python | `{"status": ...}` | `StatusDict` (TypedDict) |
-| TypeScript | `"success"` | `Status.Success` (enum) |
-| TypeScript | `{status: string}` | `interface Result` |
-| 任何語言 | `7` (magic number) | `MAX_RETRIES = 7` |
-
-### ⚠️ 防範重複定義
-
-```
-┌────────────────────────────────────────────────────────────┐
-│  禁止硬編碼 ≠ 到處建立新的 Enum/TypedDict                  │
-│                                                            │
-│  ❌ 錯誤：每個檔案都定義自己的 Status enum                 │
-│  ✅ 正確：集中定義在 types/，全專案 import 使用            │
-└────────────────────────────────────────────────────────────┘
-```
-
-**新增型別前必須檢查：**
-1. `types/` 或 `constants/` 是否已有類似定義？
-2. 現有定義能否擴展？
-3. 是否應該放在共用模組？
-
-## 🎯 Main Agent 職責
-
-**Main Agent = 監督者 + 調度者，不是執行者**
-
-```
-┌────────────────────────────────────────────────────────────┐
-│  Main Agent 應該做：                                        │
-│  ✓ 委派任務給 Sub Agents（盡量並行）                        │
-│  ✓ 監督工作流是否失效                                       │
-│  ✓ 處理未被歸類的臨時任務                                   │
-│  ✓ 隨時等候用戶的消息                                       │
-│                                                            │
-│  Main Agent 不應該做：                                       │
-│  ✗ 長時間執行程式碼撰寫                                     │
-│  ✗ 獨佔對話導致無法回應用戶                                 │
-└────────────────────────────────────────────────────────────┘
-```
-
-### 並行委派原則
-
-```python
-# ✅ 正確：並行發送多個獨立任務
-Task(subagent_type: "developer", prompt: "Task 1.1...")  }
-Task(subagent_type: "developer", prompt: "Task 1.2...")  } 同時發送
-Task(subagent_type: "developer", prompt: "Task 2.1...")  }
-
-# ❌ 錯誤：Main Agent 自己做，佔用對話
-我來寫 Task 1.1 的程式碼...（長時間執行）
-```
-
-### 與用戶互動
-
-- 任務委派後，Main Agent 應保持**可用狀態**
-- 用戶隨時可以插入訊息（詢問進度、調整方向、新增任務）
-- Main Agent 負責協調，不是埋頭苦幹
-
-### Agent 狀態顯示（必須）
-
-**每個 Sub Agent 啟動和結束時，必須顯示明確狀態：**
-
-#### Main Agent 動作格式
-```markdown
-## 🤖 MAIN 讀取 [檔案/目錄]
-## 🤖 MAIN 分析任務依賴
-## 🤖 MAIN 更新 tasks.md
-## 🤖 MAIN 準備委派任務
-## 🤖 MAIN 等候用戶指示
-```
-
-#### Sub Agent 啟動時格式
-```markdown
-## 🏗️ ARCHITECT 開始規劃 [任務描述]
-## 💻 DEVELOPER 開始實作 [Task X.X - 任務名稱]
-## 🔍 REVIEWER 開始審查 [檔案/模組名稱]
-## 🧪 TESTER 開始測試 [測試範圍]
-## 🐛 DEBUGGER 開始除錯 [問題描述]
-## 🎨 DESIGNER 開始設計 [UI/UX 範圍]
-```
-
-#### 並行啟動格式
-```markdown
-## ⚡ 啟動 3 個 💻 DEVELOPER 並行處理：
-- Task 1.1: 建立 UserService
-- Task 1.2: 建立 AuthService
-- Task 2.1: 建立 PaymentService
-```
-
-#### 結束時格式
-```markdown
-## ✅ 💻 DEVELOPER 完成 Task 1.1。啟動 🔍 R → 🧪 T
-## ✅ 🔍 REVIEWER 通過審查。啟動 🧪 TESTER
-## ✅ 🧪 TESTER 通過 (15/15 tests)。Task 1.1 完成
-## ❌ 🔍 REVIEWER 發現 2 個問題。返回 💻 DEVELOPER 修復
-```
-
-#### Skills 使用提示
-```markdown
-## 💻 DEVELOPER 開始實作 Task 2.1 (使用 dev, 永續合約 skills)
-## 🧪 TESTER 開始測試 (使用 testing, playwright skills)
-```
+**所有 Agents 必須載入 core skill（由 frontmatter 確保）。**
 
 ## Language
 
@@ -200,15 +46,11 @@ Task(subagent_type: "developer", prompt: "Task 2.1...")  }
 
 ### 工作流規則自動分類
 
-**所有工作流相關的詳細規則，自動歸類到 `workflow` skill：**
-
 | 內容類型 | 存放位置 |
 |----------|----------|
-| 執行規則 | `workflow/references/execution.md` |
-| 強制規則 | `workflow/references/enforcement.md` |
-| 並行化規則 | `workflow/references/parallelization.md` |
-
-**CLAUDE.md 只保留核心規則和快速參考。**
+| 核心規則 | `core` skill |
+| Main Agent 調度 | `main` skill |
+| 工作流細節 | `workflow` skill |
 
 ## 🚫 禁用內建 Plan Mode
 
@@ -220,62 +62,7 @@ Task(subagent_type: "developer", prompt: "Task 2.1...")  }
 ✅ 使用 OpenSpec + AskUserQuestion + TodoWrite
 ```
 
-### OpenSpec 完整替代方案（Kanban 三階段）
-
-| 階段 | 目錄 | 說明 |
-|------|------|------|
-| 待執行 | `openspec/specs/[id]/` | 規劃完成，等待開始 |
-| 進行中 | `openspec/changes/[id]/` | 正在執行 |
-| 已完成 | `openspec/archive/[id]/` | 歸檔歷史 |
-
-| 內建 Plan Mode 功能 | OpenSpec 替代 |
-|---------------------|---------------|
-| 計劃檔案 | `openspec/specs/[change-id]/` |
-| 補充問題 | `AskUserQuestion` 工具 |
-| 進度顯示 | `TodoWrite` 工具 |
-| 快速筆記 | 專案層級 `notes.md`（共用） |
-
-### 規劃流程
-
-```
-用戶：規劃 [功能名稱]
-    ↓
-🏗️ ARCHITECT 執行：
-    1. AskUserQuestion → 補充問題
-    2. TodoWrite → 建立任務追蹤
-    3. 建立 openspec/specs/[change-id]/    ← 放到「待執行」
-       ├── proposal.md
-       ├── tasks.md ☐☐☐
-       └── notes.md
-    4. 等待用戶審核
-    ↓
-用戶審核通過，開始執行：
-    mv openspec/specs/[id] openspec/changes/[id]
-```
-
----
-
-## 流程識別與調度
-
-Main Agent 遇到任務時，先識別應使用的流程：
-
-| 任務類型 | 流程 | Agent |
-|----------|------|-------|
-| 建立 skill | S→W | Skills → Workflow |
-| 遷移工具 | M→S→W→D→R→T | Migration → Skills → Workflow → D→R→T |
-| 一般開發 | D→R→T | Developer → Reviewer → Tester |
-
-### 流程選擇規則
-
-1. **識別關鍵字**：查看用戶輸入是否包含特定關鍵字
-2. **調度對應 Agent**：使用 Task tool 呼叫專門 agent
-3. **監督而非執行**：Main Agent 負責調度，不親力親為
-
-### 流程詳細定義
-
-- **S→W 流程**：Skill 建立與驗證 → 參考 `workflow/references/flows/skill-creation.md`
-- **M→S→W→D→R→T 流程**：遷移規劃與執行 → 參考 `workflow/references/flows/migration.md`
-- **D→R→T 流程**：標準開發流程 → 參考 `workflow` skill
+詳細規則 → `skills/main/references/delegation.md`
 
 ---
 
@@ -285,7 +72,7 @@ Main Agent 遇到任務時，先識別應使用的流程：
 
 | 關鍵字 | 動作 |
 |--------|------|
-| `規劃 [feature]` | ARCHITECT 建立 OpenSpec（不是內建 plan mode）|
+| `規劃 [feature]` | ARCHITECT 建立 OpenSpec |
 | `接手/工作流 [change-id]` | 從斷點恢復執行 |
 | `loop` | 持續執行直到完成 |
 
@@ -293,25 +80,18 @@ Main Agent 遇到任務時，先識別應使用的流程：
 
 | 關鍵字 | Agent |
 |--------|-------|
-| 規劃, plan | 🏗️ ARCHITECT |
-| 建立 skill, 新增 skill, 研究工具 | 📚 SKILLS |
+| 規劃, plan, 架構, 分析需求 | 🏗️ ARCHITECT |
+| skill 相關（建立/維護/檢查/研究） | 📚 SKILLS |
+| agent 相關（建立/維護/檢查/研究） | 📚 SKILLS |
 | 設計流程, 新增工作流, 驗證 skill | 🔄 WORKFLOW |
 | 遷移, 替換, 升級, migrate | 🔀 MIGRATION |
-| 設計, design, UI, UX, 介面 | 🎨 DESIGNER |
-| 實作, implement | 💻 DEVELOPER |
-| 審查, review | 🔍 REVIEWER |
-| 測試, test | 🧪 TESTER |
-| debug, 除錯 | 🐛 DEBUGGER |
+| 設計, design, UI, UX, 介面, 樣式, 佈局 | 🎨 DESIGNER |
+| 實作, implement, 開發, 寫程式, 新增功能 | 💻 DEVELOPER |
+| 審查, review, 程式碼品質 | 🔍 REVIEWER |
+| 測試, test, 驗證, QA | 🧪 TESTER |
+| debug, 除錯, 修復 bug, 錯誤排查 | 🐛 DEBUGGER |
 
-### Subagent 角色說明
-
-**D→R→T 規則是給 Main Agent 的，不是給 Subagent 的！**
-
-| 被呼叫為 | 你應該做 | 你不應該做 |
-|----------|----------|-----------|
-| `developer` | 直接寫程式碼 | 再呼叫 Task(developer) |
-| `reviewer` | 直接審查 | 再呼叫 Task(reviewer) |
-| `tester` | 直接測試 | 再呼叫 Task(tester) |
+**選擇原則**：根據**任務涉及的領域**決定，而非只看動詞。
 
 ## Available Skills
 
@@ -320,18 +100,21 @@ Main Agent 遇到任務時，先識別應使用的流程：
 | Skill | Agent | 用途 |
 |-------|-------|------|
 | **dev** | DEVELOPER | Clean Code、設計模式、安全、效能 |
+| **refactor** | DEVELOPER | Code Smells 識別、重構技術 |
 | **review** | REVIEWER | Code Smells、OWASP、SOLID |
 | **testing** | TESTER | 測試策略、Mock、邊界測試 |
 | **ui** | DESIGNER | 視覺設計規範 |
 | **ux** | DESIGNER | 使用者體驗規範 |
-| **playwright** | TESTER/DEBUGGER | 瀏覽器自動化 |
+| **browser** | TESTER/DEBUGGER | 瀏覽器自動化 (agent-browser CLI) |
 
 ### 系統 Skills
 
 | Skill | 用途 |
 |-------|------|
-| **skill-agent** | Skills 與 Agents 建立維護（含規範、範本）|
-| **workflow** | 工作流設計與驗證（S→W、M→S→W→D→R→T）|
+| **core** | 核心規則（D→R→T、禁止硬編碼、回歸測試）|
+| **main** | Main Agent 調度規則 |
+| **skill-agent** | Skills 與 Agents 建立維護 |
+| **workflow** | 工作流設計與驗證 |
 | **migration** | 工具/框架遷移規劃 |
 | **hooks-guide** | Hooks 配置指南 |
 
@@ -351,38 +134,12 @@ Main Agent 遇到任務時，先識別應使用的流程：
 ├── workflow.md        ├── designer.md       └── migration.md
 ```
 
-## 並行化原則
-
-**無依賴的操作必須同時執行**
-
-| 操作 | 處理 |
-|------|------|
-| 讀取多個不同檔案 | **並行** |
-| 搜尋多個不同模式 | **並行** |
-| 多個獨立 D→R→T | **並行啟動** |
-| Read → Edit 同一檔案 | 串行 |
-
-詳細規則 → `workflow/references/parallelization.md`
-
-## Session Report
-
-```
-═══ Session Report ═══
-✅ D→R→T: X/X (100%)
-⚡ 並行: Y/Y (100%)
-📝 變更: Z files, ±N lines
-═══════════════════════
-```
-
 ## 🔴 紅線規則
 
 觸發後必須**立即停止並調整**：
 
-1. 發現自己正在直接寫程式碼 → 停止，改用 Task(developer)
-2. 發現程式碼寫完沒有審查 → 停止，呼叫 Task(reviewer)
-3. 發現審查完沒有測試 → 停止，呼叫 Task(tester)
-4. 發現連續發送多個 Read/Grep → 停止，合併為一次發送
+1. 程式碼寫完沒有 R→T → 停止，呼叫 reviewer/tester
+2. 連續發送多個 Read/Grep → 停止，合併為一次發送
+3. Main Agent 長時間寫程式碼 → 停止，改用 Task(developer)
 
----
-
-**詳細規則請參考 `workflow` skill 的 `references/` 目錄。**
+**詳細規則請參考 `core` 和 `main` skills。**

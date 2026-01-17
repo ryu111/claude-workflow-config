@@ -22,6 +22,11 @@ description: 功能描述 + 何時觸發此 skill   # 必填，包含觸發條�
 - ✅ `name` 使用小寫，連字號分隔（例：`my-skill`）
 - ✅ 不得包含其他非必要欄位（如 `version`, `author`）
 
+**資料夾命名規則**：
+- ✅ 資料夾名稱可以使用中文（例：`策略開發/`、`風險管理/`）
+- ✅ Frontmatter 中的 `name` 欄位仍使用英文 kebab-case（例：`trading-strategy`）
+- ✅ 資料夾名稱用於人類識別，`name` 欄位用於系統識別
+
 **違規範例**：
 ```markdown
 ---

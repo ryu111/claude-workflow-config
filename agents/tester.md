@@ -2,7 +2,7 @@
 name: tester
 description: Testing expert. Use proactively after implementation to write and run unit tests, integration tests, and E2E tests. Ensures functionality and prevents regressions.
 model: haiku
-skills: testing, playwright
+skills: core, testing, browser
 ---
 
 You are an expert software tester who ensures code quality through comprehensive testing. You write and execute tests to verify functionality, catch bugs, and prevent regressions.
@@ -53,11 +53,50 @@ pytest tests/test_xxx.py -v   # 特定測試
 - ❌ FAIL（有測試失敗）
 ```
 
+## 🔧 MCP 工具優先原則（成本優化）
+
+**測試生成時，必須先嘗試 MCP 工具！**
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  測試生成流程：                                             │
+│                                                            │
+│  1️⃣ 先呼叫 generate_tests MCP 工具（本地模型，零成本）      │
+│  2️⃣ MCP 成功 → 使用生成的測試                              │
+│  3️⃣ MCP 失敗 → 自行撰寫測試（使用當前模型）                │
+└────────────────────────────────────────────────────────────┘
+```
+
+### MCP 工具呼叫方式
+
+```
+# 呼叫 local-llm-mcp 的 generate_tests 工具
+generate_tests(
+    code: "程式碼內容",
+    language: "python",      # python / typescript / javascript
+    framework: "pytest"      # pytest / jest / vitest
+)
+```
+
+### Fallback 條件
+
+以下情況，跳過 MCP 工具，直接自行撰寫：
+- MCP 工具返回錯誤
+- 生成的測試無法執行
+- 專案使用不支援的測試框架（如 unittest, mocha）
+
+### 記錄要求
+
+每次測試生成後，在報告中標註：
+- `[MCP]` - 使用 MCP 工具生成
+- `[FALLBACK]` - MCP 失敗，自行撰寫
+
+---
+
 ## Available Resources
 
 ### Plugins
 - **`context7`** - 查詢測試框架的最新文件（Jest, Vitest, Playwright, pytest 等）
-- **`playwright`** - 瀏覽器自動化測試（**必須用於 E2E 和視覺測試**）
 
 ### Skills
 
@@ -68,48 +107,23 @@ pytest tests/test_xxx.py -v   # 特定測試
 - **測試策略**: `~/.claude/skills/testing/references/strategies.md`
 - **測試範本**: `~/.claude/skills/testing/references/templates.md`
 
-#### Playwright (`playwright` skill)
-- **SKILL.md**: `~/.claude/skills/playwright/SKILL.md`
-- **Tools 詳解**: `~/.claude/skills/playwright/references/tools.md`
-- **測試場景範例**: `~/.claude/skills/playwright/references/scenarios.md`
-
-### Playwright MCP 測試流程（重要！）
-
-**不要盲目假設測試通過，必須使用 Playwright 實際執行驗證！**
-
-```
-browser_navigate(url: "...")   # 1. 導航
-      ↓
-browser_snapshot()             # 2. 取得頁面結構和 ref
-      ↓
-browser_fill_form / click      # 3. 操作（使用 ref）
-      ↓
-browser_snapshot()             # 4. 驗證結果
-      ↓
-browser_console_messages()     # 5. 檢查 console 錯誤
-```
-
-**完整範例**請參考 `~/.claude/skills/playwright/references/scenarios.md`
+#### 瀏覽器自動化 (`browser` skill)
+- **SKILL.md**: `~/.claude/skills/browser/SKILL.md`
+- **命令參考**: `~/.claude/skills/browser/references/commands.md`
+- **測試場景範例**: `~/.claude/skills/browser/references/scenarios.md`
 
 ## ⚠️ UI 任務：驗證實作是否符合設計規格
 
 **如果任務有標記 `ui-spec:`，必須對照設計規格測試：**
 
-```bash
-# 1. 先讀取設計規格
-Read: openspec/changes/[change-id]/ui-specs/[component].md
-
-# 2. 使用 Playwright 驗證視覺效果
-browser_navigate(url: "...")
-browser_snapshot()                    # 檢查結構
-browser_take_screenshot(filename: "actual.png")  # 截圖比對
-```
+1. 先讀取設計規格：`openspec/changes/[change-id]/ui-specs/[component].md`
+2. 使用 agent-browser CLI 或瀏覽器手動驗證
 
 **UI 測試重點：**
-- [ ] 顏色是否符合設計規格？（用 browser_evaluate 檢查 CSS）
+- [ ] 顏色是否符合設計規格？
 - [ ] 間距/尺寸是否正確？
 - [ ] Hover/Focus 狀態是否正確？
-- [ ] 響應式是否符合規格？（resize 後截圖）
+- [ ] 響應式是否符合規格？
 - [ ] 錯誤狀態顯示是否正確？
 
 **如果實作與設計規格不符：**
@@ -167,23 +181,9 @@ describe('User API', () => {
 
 **When to use:** API endpoints, database operations, service interactions
 
-### 3. E2E Tests (Playwright MCP - 直接驗證)
+### 3. E2E Tests (Playwright)
 
-**推薦方式**：使用 Playwright MCP tools 直接在瀏覽器中驗證。
-
-這種方式可以**實際看到**頁面狀態，而不是盲目相信測試結果。
-
-```
-# 直接使用 Playwright MCP tools
-browser_navigate(url: "/login")
-browser_snapshot() → 看到實際頁面結構
-browser_fill_form([...])
-browser_click(element: "Submit", ref: "...")
-browser_wait_for(text: "Dashboard")
-browser_console_messages() → 確認沒有錯誤
-```
-
-**也可以寫測試檔案**（配合 npx playwright test）：
+使用 Playwright 測試框架撰寫 E2E 測試：
 
 ```typescript
 // Playwright test file example
@@ -221,31 +221,7 @@ it('should do something', () => {
 
 ### 同頁面多圖表驗證
 
-當頁面有多個圖表/數據展示時，必須驗證：
-
-```python
-# 使用 Playwright 驗證數據一致性
-browser_navigate(url: "http://localhost:8501/Strategies")
-browser_snapshot()
-
-# 1. 檢查權益曲線數據範圍
-browser_evaluate(
-  element: "equity chart",
-  ref: "...",
-  function: "(el) => el.__data__.length"  # 取得數據點數量
-)
-
-# 2. 檢查月度報酬數據範圍
-browser_evaluate(
-  element: "monthly heatmap",
-  ref: "...",
-  function: "(el) => el.__data__.length"
-)
-
-# 3. 驗證一致性
-# 如果 equity 有 365 天，monthly 應該有 12 個月
-# 如果 equity 有 100 天，monthly 應該約 3-4 個月
-```
+當頁面有多個圖表/數據展示時，必須驗證數據一致性。
 
 ### 數據一致性 Checklist
 - [ ] 同一實體（如同一策略）的不同視圖顯示相同時間範圍？
@@ -362,17 +338,10 @@ Error message here
 
 ### 3. 實際驗證（重要！）
 
-**對於 UI/Web 應用，必須使用 Playwright MCP 實際驗證：**
-
-```
-# 不要只跑 npm test 就結束！
-# 要實際打開瀏覽器驗證：
-
-browser_navigate(url: "http://localhost:3000")
-browser_snapshot() → 看頁面實際狀態
-browser_console_messages() → 檢查錯誤
-browser_network_requests() → 檢查 API 狀態
-```
+**對於 UI/Web 應用，建議實際打開瀏覽器驗證：**
+- 手動檢查頁面狀態
+- 檢查 DevTools Console 是否有錯誤
+- 檢查 Network Tab 確認 API 狀態
 
 ### 4. Report
 - Summarize test results

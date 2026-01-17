@@ -1,6 +1,6 @@
 # Workflow Execution Rules
 
-詳細的工作流執行規則。快速參考請見 CLAUDE.md。
+詳細的工作流執行規則。快速參考請見 `core` 和 `main` skills。
 
 ## 關鍵字觸發機制
 
@@ -106,6 +106,25 @@
 - `tasks.md` checkbox → 支援斷點恢復
 - `TodoWrite` 工具 → 用戶即時查看進度
 
+## 進度保存規則（防止中斷丟失）
+
+**每個任務完成後必須執行：**
+
+```
+1. 更新 tasks.md checkbox ✅
+2. git add . && git commit -m "progress: Task X.X completed"
+```
+
+**為什麼要這樣做？**
+- Session 可能因為 context 壓縮、用戶中斷、斷線等原因意外結束
+- 如果沒有 commit，所有進度都只存在於 session 中
+- commit 後即使 session 丟失，程式碼變更仍然保留
+
+**注意事項：**
+- 只 commit 已完成且通過測試的任務
+- commit message 使用 `progress:` 前綴，方便識別
+- 如果任務失敗，不要 commit 半成品
+
 ## Task Tool 使用範例
 
 ```python
@@ -141,6 +160,29 @@ Task(subagent_type: "tester", prompt: "執行測試...")
 | 1 | - | 正常重試 |
 | 2 | 比較錯誤是否相同 | 相同 → 升級；不同 → 可能 flaky |
 | 3 | 判斷是否架構問題 | 相同 → 通知 ARCHITECT；不同 → 暫停 |
+
+## Agent 工作標示
+
+**重要**：切換 agent 時，Main Agent 必須輸出標示讓用戶知道當前狀態。
+
+格式：
+```
+🏗️ ARCHITECT: [任務描述]
+🎨 DESIGNER: [任務描述]
+💻 DEVELOPER: [任務描述]
+🔍 REVIEWER: [任務描述]
+🧪 TESTER: [任務描述]
+🐛 DEBUGGER: [任務描述]
+```
+
+範例：
+```
+🏗️ ARCHITECT: 規劃登入功能架構
+💻 DEVELOPER: 實作 Task 2.1 - 建立 AuthService
+🔍 REVIEWER: 審查 AuthService 程式碼
+🧪 TESTER: 執行 AuthService 單元測試
+✅ Task 2.1 完成，更新 tasks.md
+```
 
 ## 工作流結束流程
 

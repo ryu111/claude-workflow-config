@@ -2,7 +2,25 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/hooks/core/session-start.js\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/hooks/core/session-start-cleanup.js\"",
+            "timeout": 5,
+            "statusMessage": "清理重複實例..."
+          }
+        ]
+      },
+      {
         "hooks": [
           {
             "type": "command",
@@ -14,8 +32,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"/Users/sbu/.claude/hooks/core/session-start.js\"",
-            "timeout": 10
+            "command": "/Users/sbu/.claude/hooks/llm/check-llm-service.sh",
+            "timeout": 10,
+            "statusMessage": "啟動 LLM Service..."
           }
         ]
       }
@@ -60,12 +79,27 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "mcp__",
+        "matchers": ["mcp__"],
         "hooks": [
           {
             "type": "command",
             "command": "node \"/Users/sbu/.claude/hooks/core/permission-request.js\"",
             "timeout": 5
+          }
+        ]
+      },
+      {
+        "matchers": ["Task"],
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/workflow/check-core-skill.sh",
+            "timeout": 2
+          },
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/workflow/delegation-logger.sh",
+            "timeout": 1
           }
         ]
       }
@@ -77,6 +111,38 @@
             "type": "command",
             "command": "node \"/Users/sbu/.claude/hooks/core/mid-conversation.js\"",
             "timeout": 8
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/workflow/loop-continue-reminder.sh",
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/workflow/pre-compact-save.sh",
+            "timeout": 3,
+            "statusMessage": "備份 Loop 狀態..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/workflow/stop-save-progress.sh",
+            "timeout": 3
           }
         ]
       }
@@ -93,6 +159,21 @@
             "type": "command",
             "command": "node \"/Users/sbu/.claude/hooks/core/auto-capture-hook.js\"",
             "timeout": 5
+          }
+        ]
+      },
+      {
+        "matchers": [
+          "Edit",
+          "Write",
+          "Bash",
+          "Task"
+        ],
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/workflow/loop-heartbeat.sh",
+            "timeout": 1
           }
         ]
       },
@@ -121,6 +202,18 @@
             "timeout": 2
           }
         ]
+      },
+      {
+        "matchers": [
+          "Bash"
+        ],
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/core/fix-on-discovery.sh",
+            "timeout": 2
+          }
+        ]
       }
     ]
   },
@@ -130,7 +223,6 @@
     "commit-commands@claude-plugins-official": true,
     "security-guidance@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
-    "playwright@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
     "ralph-loop@claude-plugins-official": true
   },

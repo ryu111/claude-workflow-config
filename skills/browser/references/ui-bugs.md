@@ -1,6 +1,6 @@
 # 常見 UI Bug 類型與檢測
 
-這份文檔列出開發中最常出現的 UI Bug，以及如何用 Playwright 檢測。
+這份文檔列出開發中最常出現的 UI Bug，以及如何用 agent-browser 檢測。
 
 ## Bug 分類
 
@@ -15,22 +15,19 @@
 
 **檢測方法**：
 
-```javascript
-// 檢查是否有溢出
-browser_evaluate(
-  element: "card container",
-  ref: "s1e5",
-  function: `(element) => {
+```bash
+# 檢查是否有溢出
+browser evaluate "@card-container" \
+  '(element) => {
     return {
       scrollWidth: element.scrollWidth,
       clientWidth: element.clientWidth,
       hasOverflow: element.scrollWidth > element.clientWidth,
       overflowX: window.getComputedStyle(element).overflowX
     };
-  }`
-)
-// ❌ Bug: { scrollWidth: 1320, clientWidth: 1280, hasOverflow: true }
-// ✅ 正確: { scrollWidth: 1280, clientWidth: 1280, hasOverflow: false }
+  }'
+# ❌ Bug: { scrollWidth: 1320, clientWidth: 1280, hasOverflow: true }
+# ✅ 正確: { scrollWidth: 1280, clientWidth: 1280, hasOverflow: false }
 ```
 
 **常見原因**：
@@ -49,14 +46,12 @@ browser_evaluate(
 
 **檢測方法**：
 
-```javascript
-// 檢查兩個元素是否重疊
-browser_evaluate(
-  element: "container",
-  ref: "s1e1",
-  function: `(element) => {
-    const elem1 = element.querySelector('.card-1');
-    const elem2 = element.querySelector('.card-2');
+```bash
+# 檢查兩個元素是否重疊
+browser evaluate "@container" \
+  '(element) => {
+    const elem1 = element.querySelector(".card-1");
+    const elem2 = element.querySelector(".card-2");
 
     const rect1 = elem1.getBoundingClientRect();
     const rect2 = elem2.getBoundingClientRect();
@@ -73,9 +68,8 @@ browser_evaluate(
       card2: { top: rect2.top, left: rect2.left, width: rect2.width, height: rect2.height },
       hasOverlap: overlap
     };
-  }`
-)
-// ❌ Bug: { hasOverlap: true }
+  }'
+# ❌ Bug: { hasOverlap: true }
 ```
 
 **常見原因**：
@@ -94,12 +88,10 @@ browser_evaluate(
 
 **檢測方法**：
 
-```javascript
-// 檢查多個元素的左對齊
-browser_evaluate(
-  element: "list container",
-  ref: "s1e10",
-  function: `(element) => {
+```bash
+# 檢查多個元素的左對齊
+browser evaluate "@list-container" \
+  '(element) => {
     const items = Array.from(element.children);
     const leftPositions = items.map(item => item.getBoundingClientRect().left);
     const firstLeft = leftPositions[0];
@@ -110,10 +102,9 @@ browser_evaluate(
       allAligned: allAligned,
       maxDiff: Math.max(...leftPositions) - Math.min(...leftPositions)
     };
-  }`
-)
-// ❌ Bug: { allAligned: false, maxDiff: 8 }
-// ✅ 正確: { allAligned: true, maxDiff: 0 }
+  }'
+# ❌ Bug: { allAligned: false, maxDiff: 8 }
+# ✅ 正確: { allAligned: true, maxDiff: 0 }
 ```
 
 **常見原因**：
@@ -134,13 +125,11 @@ browser_evaluate(
 
 **檢測方法**：
 
-```javascript
-// 檢查所有主按鈕顏色一致
-browser_evaluate(
-  element: "page container",
-  ref: "s1e1",
-  function: `(element) => {
-    const buttons = Array.from(element.querySelectorAll('button.primary'));
+```bash
+# 檢查所有主按鈕顏色一致
+browser evaluate "@page-container" \
+  '(element) => {
+    const buttons = Array.from(element.querySelectorAll("button.primary"));
     const colors = buttons.map(btn => {
       const style = window.getComputedStyle(btn);
       return {
@@ -156,9 +145,8 @@ browser_evaluate(
       colors: colors,
       allConsistent: allSame
     };
-  }`
-)
-// ❌ Bug: 有的按鈕 rgb(59, 130, 246)，有的 #3b82f6
+  }'
+# ❌ Bug: 有的按鈕 rgb(59, 130, 246)，有的 #3b82f6
 ```
 
 **常見原因**：
@@ -168,18 +156,16 @@ browser_evaluate(
 
 **如何檢測 CSS Variable 使用**：
 
-```javascript
-browser_evaluate(
-  element: "primary button",
-  ref: "s1e5",
-  function: `(element) => {
+```bash
+browser evaluate "@primary-button" \
+  '(element) => {
     // 取得實際背景色
     const computed = window.getComputedStyle(element);
     const actualBg = computed.backgroundColor;
 
     // 取得 CSS variable 值
     const rootStyle = window.getComputedStyle(document.documentElement);
-    const tokenBg = rootStyle.getPropertyValue('--color-primary').trim();
+    const tokenBg = rootStyle.getPropertyValue("--color-primary").trim();
 
     // 如果 token 是 hex，需轉 rgb 比較
     // 這裡假設 token 已經是 rgb 或頁面有做轉換
@@ -187,12 +173,11 @@ browser_evaluate(
     return {
       actual: actualBg,
       token: tokenBg,
-      usesToken: computed.getPropertyValue('background-color').includes('var(')
+      usesToken: computed.getPropertyValue("background-color").includes("var(")
     };
-  }`
-)
-// ✅ 正確: { usesToken: true }
-// ❌ Bug: { usesToken: false } (hardcode)
+  }'
+# ✅ 正確: { usesToken: true }
+# ❌ Bug: { usesToken: false } (hardcode)
 ```
 
 ---
@@ -206,15 +191,13 @@ browser_evaluate(
 
 **檢測方法**：
 
-```javascript
-// 計算對比度
-browser_evaluate(
-  element: "text on background",
-  ref: "s1e8",
-  function: `(element) => {
+```bash
+# 計算對比度
+browser evaluate "@text-on-background" \
+  '(element) => {
     // 簡化版對比度計算（實際應使用完整公式）
     function getLuminance(rgb) {
-      const [r, g, b] = rgb.match(/\\d+/g).map(Number);
+      const [r, g, b] = rgb.match(/\d+/g).map(Number);
       const [rs, gs, bs] = [r, g, b].map(c => {
         c = c / 255;
         return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
@@ -238,10 +221,9 @@ browser_evaluate(
       meetsAA: ratio >= 4.5,
       meetsAAA: ratio >= 7
     };
-  }`
-)
-// ❌ Bug: { contrastRatio: "3.2", meetsAA: false }
-// ✅ 正確: { contrastRatio: "6.8", meetsAA: true }
+  }'
+# ❌ Bug: { contrastRatio: "3.2", meetsAA: false }
+# ✅ 正確: { contrastRatio: "6.8", meetsAA: true }
 ```
 
 **常見原因**：
@@ -262,24 +244,21 @@ browser_evaluate(
 
 **檢測方法**：
 
-```javascript
-// 檢查內文字體大小
-browser_evaluate(
-  element: "body text",
-  ref: "s1e12",
-  function: `(element) => {
+```bash
+# 檢查內文字體大小
+browser evaluate "@body-text" \
+  '(element) => {
     const style = window.getComputedStyle(element);
     const fontSize = parseFloat(style.fontSize);
 
     return {
       fontSize: fontSize,
-      fontSizeRem: (fontSize / 16).toFixed(2) + 'rem',
+      fontSizeRem: (fontSize / 16).toFixed(2) + "rem",
       tooSmall: fontSize < 16
     };
-  }`
-)
-// ❌ Bug: { fontSize: 14, tooSmall: true }
-// ✅ 正確: { fontSize: 16, tooSmall: false }
+  }'
+# ❌ Bug: { fontSize: 14, tooSmall: true }
+# ✅ 正確: { fontSize: 16, tooSmall: false }
 ```
 
 ---
@@ -293,20 +272,17 @@ browser_evaluate(
 
 **檢測方法**：
 
-```javascript
-browser_evaluate(
-  element: "heading",
-  ref: "s1e3",
-  function: `(element) => {
+```bash
+browser evaluate "@heading" \
+  '(element) => {
     const style = window.getComputedStyle(element);
     return {
       fontWeight: style.fontWeight,
       shouldBeSemibold: parseInt(style.fontWeight) >= 600
     };
-  }`
-)
-// ❌ Bug: { fontWeight: "400", shouldBeSemibold: false }
-// ✅ 正確: { fontWeight: "600", shouldBeSemibold: true }
+  }'
+# ❌ Bug: { fontWeight: "400", shouldBeSemibold: false }
+# ✅ 正確: { fontWeight: "600", shouldBeSemibold: true }
 ```
 
 ---
@@ -322,23 +298,20 @@ browser_evaluate(
 
 **檢測方法**：
 
-```javascript
-browser_evaluate(
-  element: "card",
-  ref: "s1e15",
-  function: `(element) => {
+```bash
+browser evaluate "@card" \
+  '(element) => {
     const style = window.getComputedStyle(element);
     const padding = parseFloat(style.paddingTop);
 
     return {
       padding: padding,
       isMultipleOf4: padding % 4 === 0,
-      usesToken: style.getPropertyValue('padding').includes('var(')
+      usesToken: style.getPropertyValue("padding").includes("var(")
     };
-  }`
-)
-// ❌ Bug: { padding: 18, isMultipleOf4: false }
-// ✅ 正確: { padding: 16, isMultipleOf4: true }
+  }'
+# ❌ Bug: { padding: 18, isMultipleOf4: false }
+# ✅ 正確: { padding: 16, isMultipleOf4: true }
 ```
 
 ---
@@ -351,11 +324,9 @@ browser_evaluate(
 
 **檢測方法**：
 
-```javascript
-browser_evaluate(
-  element: "list container",
-  ref: "s1e20",
-  function: `(element) => {
+```bash
+browser evaluate "@list-container" \
+  '(element) => {
     const items = Array.from(element.children);
     const gaps = [];
 
@@ -373,10 +344,9 @@ browser_evaluate(
       gaps: gaps,
       allConsistent: allSame
     };
-  }`
-)
-// ❌ Bug: { gaps: [16, 12, 16, 14], allConsistent: false }
-// ✅ 正確: { gaps: [16, 16, 16, 16], allConsistent: true }
+  }'
+# ❌ Bug: { gaps: [16, 12, 16, 14], allConsistent: false }
+# ✅ 正確: { gaps: [16, 16, 16, 16], allConsistent: true }
 ```
 
 ---
@@ -392,24 +362,21 @@ browser_evaluate(
 
 **檢測方法**：
 
-```javascript
-// Mobile 測試
-browser_resize(width: 375, height: 667)
-browser_snapshot()
+```bash
+# Mobile 測試
+browser resize 375 667
+browser snapshot
 
-browser_evaluate(
-  element: "navigation",
-  ref: "s1e1",
-  function: `(element) => {
+browser evaluate "@navigation" \
+  '(element) => {
     const style = window.getComputedStyle(element);
     return {
       display: style.display,
       flexDirection: style.flexDirection,
-      isMobileLayout: style.flexDirection === 'column'
+      isMobileLayout: style.flexDirection === "column"
     };
-  }`
-)
-// ❌ Bug: { flexDirection: "row", isMobileLayout: false } (應該是 column)
+  }'
+# ❌ Bug: { flexDirection: "row", isMobileLayout: false } (應該是 column)
 ```
 
 ---
@@ -422,21 +389,18 @@ browser_evaluate(
 
 **檢測方法**：
 
-```javascript
-browser_resize(width: 375, height: 667)
+```bash
+browser resize 375 667
 
-browser_evaluate(
-  element: "body",
-  ref: "s1e0",
-  function: `() => {
+browser evaluate "@body" \
+  '() => {
     return {
       bodyScrollWidth: document.body.scrollWidth,
       windowWidth: window.innerWidth,
       hasHorizontalScroll: document.body.scrollWidth > window.innerWidth
     };
-  }`
-)
-// ❌ Bug: { bodyScrollWidth: 500, windowWidth: 375, hasHorizontalScroll: true }
+  }'
+# ❌ Bug: { bodyScrollWidth: 500, windowWidth: 375, hasHorizontalScroll: true }
 ```
 
 ---
@@ -451,27 +415,21 @@ browser_evaluate(
 
 **檢測方法**：
 
-```javascript
-// 1. 記錄初始狀態
-browser_snapshot()
-browser_evaluate(
-  element: "button",
-  ref: "s1e10",
-  function: "(element) => window.getComputedStyle(element).backgroundColor"
-)
-// 初始: rgb(59, 130, 246)
+```bash
+# 1. 記錄初始狀態
+browser snapshot
+browser evaluate "@button" \
+  '(element) => window.getComputedStyle(element).backgroundColor'
+# 初始: rgb(59, 130, 246)
 
-// 2. Hover
-browser_hover(element: "button", ref: "s1e10")
+# 2. Hover
+browser hover "@button"
 
-// 3. 檢查變化
-browser_evaluate(
-  element: "button",
-  ref: "s1e10",
-  function: "(element) => window.getComputedStyle(element).backgroundColor"
-)
-// ❌ Bug: rgb(59, 130, 246) (沒變化)
-// ✅ 正確: rgb(37, 99, 235) (變深)
+# 3. 檢查變化
+browser evaluate "@button" \
+  '(element) => window.getComputedStyle(element).backgroundColor'
+# ❌ Bug: rgb(59, 130, 246) (沒變化)
+# ✅ 正確: rgb(37, 99, 235) (變深)
 ```
 
 ---
@@ -484,23 +442,20 @@ browser_evaluate(
 
 **檢測方法**：
 
-```javascript
-browser_click(element: "input", ref: "s1e5")
+```bash
+browser click "@input"
 
-browser_evaluate(
-  element: "input",
-  ref: "s1e5",
-  function: `(element) => {
+browser evaluate "@input" \
+  '(element) => {
     const style = window.getComputedStyle(element);
     return {
       outline: style.outline,
       outlineWidth: style.outlineWidth,
-      hasFocusRing: style.outlineWidth !== '0px' && style.outline !== 'none'
+      hasFocusRing: style.outlineWidth !== "0px" && style.outline !== "none"
     };
-  }`
-)
-// ❌ Bug: { outline: "none", hasFocusRing: false }
-// ✅ 正確: { outline: "2px solid rgb(59, 130, 246)", hasFocusRing: true }
+  }'
+# ❌ Bug: { outline: "none", hasFocusRing: false }
+# ✅ 正確: { outline: "2px solid rgb(59, 130, 246)", hasFocusRing: true }
 ```
 
 ---
@@ -513,22 +468,19 @@ browser_evaluate(
 
 **檢測方法**：
 
-```javascript
-browser_evaluate(
-  element: "disabled button",
-  ref: "s1e8",
-  function: `(element) => {
+```bash
+browser evaluate "@disabled-button" \
+  '(element) => {
     const style = window.getComputedStyle(element);
     return {
       opacity: style.opacity,
       cursor: style.cursor,
       disabled: element.disabled,
-      visuallyDisabled: parseFloat(style.opacity) <= 0.6 && style.cursor === 'not-allowed'
+      visuallyDisabled: parseFloat(style.opacity) <= 0.6 && style.cursor === "not-allowed"
     };
-  }`
-)
-// ❌ Bug: { opacity: "1", cursor: "pointer", visuallyDisabled: false }
-// ✅ 正確: { opacity: "0.6", cursor: "not-allowed", visuallyDisabled: true }
+  }'
+# ❌ Bug: { opacity: "1", cursor: "pointer", visuallyDisabled: false }
+# ✅ 正確: { opacity: "0.6", cursor: "not-allowed", visuallyDisabled: true }
 ```
 
 ---
@@ -544,18 +496,16 @@ browser_evaluate(
 
 **檢測方法**：
 
-```javascript
-browser_evaluate(
-  element: "chart container",
-  ref: "s1e20",
-  function: `(element) => {
+```bash
+browser evaluate "@chart-container" \
+  '(element) => {
     const chart = echarts.getInstanceByDom(element);
     const option = chart.getOption();
 
     const expectedColors = [
-      'rgb(59, 130, 246)',   // --color-primary
-      'rgb(16, 185, 129)',   // --color-success
-      'rgb(249, 115, 22)'    // --color-warning
+      "rgb(59, 130, 246)",   // --color-primary
+      "rgb(16, 185, 129)",   // --color-success
+      "rgb(249, 115, 22)"    // --color-warning
     ];
 
     const actualColors = option.color;
@@ -565,9 +515,8 @@ browser_evaluate(
       actual: actualColors,
       matches: JSON.stringify(expectedColors) === JSON.stringify(actualColors)
     };
-  }`
-)
-// ❌ Bug: { matches: false }
+  }'
+# ❌ Bug: { matches: false }
 ```
 
 ---
@@ -580,17 +529,15 @@ browser_evaluate(
 
 **檢測方法**：
 
-```javascript
-browser_snapshot()
-// 檢查 legend 是否存在且正確
-// legend [ref=s1e25]
-//   - "BTC" (blue)
-//   - "ETH" (green)
+```bash
+browser snapshot
+# 檢查 legend 是否存在且正確
+# legend [@chart-legend]
+#   - "BTC" (blue)
+#   - "ETH" (green)
 
-browser_evaluate(
-  element: "chart container",
-  ref: "s1e20",
-  function: `(element) => {
+browser evaluate "@chart-container" \
+  '(element) => {
     const chart = echarts.getInstanceByDom(element);
     const option = chart.getOption();
 
@@ -598,9 +545,8 @@ browser_evaluate(
       legendData: option.legend[0].data,
       seriesNames: option.series.map(s => s.name)
     };
-  }`
-)
-// ✅ 正確: legendData 應該等於 seriesNames
+  }'
+# ✅ 正確: legendData 應該等於 seriesNames
 ```
 
 ---
@@ -613,21 +559,21 @@ browser_evaluate(
 
 **檢測方法**：
 
-```javascript
-// 1. Hover 到資料點
-browser_hover(element: "first data point", ref: "s1e30")
+```bash
+# 1. Hover 到資料點
+browser hover "@first-data-point"
 
-// 2. 等待 tooltip
-browser_wait_for(text: "2024-01-01")
+# 2. 等待 tooltip
+browser wait --text "2024-01-01"
 
-// 3. Snapshot 檢查
-browser_snapshot()
-// ❌ Bug: tooltip 顯示 "01/01/2024"（格式錯誤）
-// ✅ 正確: tooltip 顯示 "2024-01-01"
+# 3. Snapshot 檢查
+browser snapshot
+# ❌ Bug: tooltip 顯示 "01/01/2024"（格式錯誤）
+# ✅ 正確: tooltip 顯示 "2024-01-01"
 
-// 4. 驗證數字格式
-browser_wait_for(text: "1,234.56")
-// ❌ Bug: 顯示 "1234.56"（缺少千分位）
+# 4. 驗證數字格式
+browser wait --text "1,234.56"
+# ❌ Bug: 顯示 "1234.56"（缺少千分位）
 ```
 
 ---
@@ -658,14 +604,12 @@ browser_wait_for(text: "1,234.56")
 
 完整的 UI Bug 掃描：
 
-```javascript
-// ========== 佈局檢測 ==========
-console.log("1. 檢測溢出問題...");
-browser_evaluate(
-  element: "body",
-  ref: "s1e0",
-  function: `() => {
-    const allElements = document.querySelectorAll('*');
+```bash
+# ========== 佈局檢測 ==========
+echo "1. 檢測溢出問題..."
+browser evaluate "@body" \
+  '() => {
+    const allElements = document.querySelectorAll("*");
     const overflowElements = Array.from(allElements).filter(el => {
       return el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight;
     });
@@ -680,26 +624,20 @@ browser_evaluate(
         clientWidth: el.clientWidth
       }))
     };
-  }`
-)
+  }'
 
-// ========== 顏色檢測 ==========
-console.log("2. 檢測對比度...");
-browser_evaluate(
-  element: "body",
-  ref: "s1e0",
-  function: `() => {
+# ========== 顏色檢測 ==========
+echo "2. 檢測對比度..."
+browser evaluate "@body" \
+  '() => {
     // ... 對比度檢測邏輯（見上方）
-  }`
-)
+  }'
 
-// ========== 字體檢測 ==========
-console.log("3. 檢測字體大小...");
-browser_evaluate(
-  element: "body",
-  ref: "s1e0",
-  function: `() => {
-    const textElements = document.querySelectorAll('p, span, div, a, label');
+# ========== 字體檢測 ==========
+echo "3. 檢測字體大小..."
+browser evaluate "@body" \
+  '() => {
+    const textElements = document.querySelectorAll("p, span, div, a, label");
     const smallText = Array.from(textElements).filter(el => {
       const fontSize = parseFloat(window.getComputedStyle(el).fontSize);
       return fontSize < 16 && el.textContent.trim().length > 0;
@@ -712,29 +650,33 @@ browser_evaluate(
         fontSize: window.getComputedStyle(el).fontSize
       }))
     };
-  }`
-)
+  }'
 
-// ========== 響應式檢測 ==========
-console.log("4. 檢測響應式...");
-const breakpoints = [
-  { name: 'mobile', width: 375 },
-  { name: 'tablet', width: 768 },
-  { name: 'desktop', width: 1280 }
-];
+# ========== 響應式檢測 ==========
+echo "4. 檢測響應式..."
+browser resize 375 800
+browser evaluate "@body" \
+  '() => {
+    return {
+      hasHorizontalScroll: document.body.scrollWidth > window.innerWidth
+    };
+  }'
 
-for (const bp of breakpoints) {
-  browser_resize(width: bp.width, height: 800);
-  browser_evaluate(
-    element: "body",
-    ref: "s1e0",
-    function: `() => {
-      return {
-        hasHorizontalScroll: document.body.scrollWidth > window.innerWidth
-      };
-    }`
-  );
-}
+browser resize 768 800
+browser evaluate "@body" \
+  '() => {
+    return {
+      hasHorizontalScroll: document.body.scrollWidth > window.innerWidth
+    };
+  }'
+
+browser resize 1280 800
+browser evaluate "@body" \
+  '() => {
+    return {
+      hasHorizontalScroll: document.body.scrollWidth > window.innerWidth
+    };
+  }'
 ```
 
 ---
