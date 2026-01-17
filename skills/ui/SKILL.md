@@ -258,11 +258,20 @@ xl: 1280px  /* 大桌面 */
 
 | 資源 | 檔案 |
 |------|------|
+| **可視化預覽** | `demo/style-preview.html` |
 | 風格總覽 | `references/styles/index.md` |
 | 產業映射 | `references/styles/industry.md` |
 | 配色方案 | `references/palettes.md` |
 | 字體配對 | `references/font-pairs.md` |
 | 提案模板 | `templates/multi-style-proposal.md` |
+
+### 使用 Demo 預覽
+
+在瀏覽器打開 `demo/style-preview.html` 可以：
+- 即時切換 8 種風格（Clean、Dark、Terminal、Glass 等）
+- 預覽按鈕、卡片、表單、表格等元件
+- 查看配色方案
+- 一鍵複製 CSS Variables
 
 ---
 

@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UI Style Preview - 風格預覽</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ========== Base Reset ========== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--color-bg);
+      color: var(--color-text);
+      min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* ========== CSS Variables - Default (Clean Minimal) ========== */
+    :root {
+      --font-heading: 'Inter', -apple-system, sans-serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --color-primary: #2563eb;
+      --color-primary-hover: #1d4ed8;
+      --color-secondary: #64748b;
+      --color-accent: #f59e0b;
+      --color-bg: #ffffff;
+      --color-surface: #f8fafc;
+      --color-text: #1e293b;
+      --color-text-muted: #64748b;
+      --color-border: #e2e8f0;
+      --color-success: #22c55e;
+      --color-warning: #f59e0b;
+      --color-error: #ef4444;
+
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 12px;
+      --radius-full: 9999px;
+
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+
+      --border-width: 1px;
+      --transition: 150ms ease;
+    }
+
+    /* ========== Style: Dark Mode Native ========== */
+    [data-style="dark-mode"] {
+      --font-heading: 'Inter', -apple-system, sans-serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
+
+      --color-primary: #3b82f6;
+      --color-primary-hover: #60a5fa;
+      --color-secondary: #64748b;
+      --color-accent: #22c55e;
+      --color-bg: #0a0a0a;
+      --color-surface: #141414;
+      --color-text: #f4f4f5;
+      --color-text-muted: #71717a;
+      --color-border: #292929;
+      --color-success: #22c55e;
+      --color-warning: #f59e0b;
+      --color-error: #ef4444;
+
+      --radius-md: 8px;
+      --shadow-md: 0 0 20px rgba(59, 130, 246, 0.2);
+    }
+
+    /* ========== Style: Terminal Matrix ========== */
+    [data-style="terminal"] {
+      --font-heading: 'Fira Code', monospace;
+      --font-body: 'Fira Code', monospace;
+      --font-mono: 'Fira Code', monospace;
+
+      --color-primary: #00ff41;
+      --color-primary-hover: #00cc33;
+      --color-secondary: #006b1a;
+      --color-accent: #ffff00;
+      --color-bg: #000000;
+      --color-surface: #0a0a0a;
+      --color-text: #00ff41;
+      --color-text-muted: #006b1a;
+      --color-border: #00ff41;
+      --color-success: #00ff41;
+      --color-warning: #ffff00;
+      --color-error: #ff0040;
+
+      --radius-sm: 0;
+      --radius-md: 0;
+      --radius-lg: 0;
+      --border-width: 2px;
+      --shadow-md: 0 0 10px rgba(0, 255, 65, 0.3);
+    }
+
+    /* ========== Style: Glassmorphism ========== */
+    [data-style="glass"] {
+      --font-heading: 'Plus Jakarta Sans', sans-serif;
+      --font-body: 'Inter', sans-serif;
+
+      --color-primary: #6366f1;
+      --color-primary-hover: #4f46e5;
+      --color-secondary: #06b6d4;
+      --color-accent: #10b981;
+      --color-bg: #0f172a;
+      --color-surface: rgba(30, 41, 59, 0.8);
+      --color-text: #f8fafc;
+      --color-text-muted: #94a3b8;
+      --color-border: rgba(255, 255, 255, 0.1);
+      --color-success: #10b981;
+      --color-warning: #f59e0b;
+      --color-error: #f43f5e;
+
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.3);
+      --glass-blur: blur(12px);
+    }
+
+    /* ========== Style: Neubrutalism ========== */
+    [data-style="neubrutalism"] {
+      --font-heading: 'Space Grotesk', sans-serif;
+      --font-body: 'Inter', sans-serif;
+
+      --color-primary: #ff6b6b;
+      --color-primary-hover: #ee5a5a;
+      --color-secondary: #4ecdc4;
+      --color-accent: #ffe66d;
+      --color-bg: #f7f7f7;
+      --color-surface: #ffffff;
+      --color-text: #2d3436;
+      --color-text-muted: #636e72;
+      --color-border: #2d3436;
+      --color-success: #00b894;
+      --color-warning: #fdcb6e;
+      --color-error: #d63031;
+
+      --radius-sm: 0;
+      --radius-md: 4px;
+      --radius-lg: 8px;
+      --border-width: 3px;
+      --shadow-md: 4px 4px 0 #2d3436;
+      --shadow-lg: 6px 6px 0 #2d3436;
+    }
+
+    /* ========== Style: Cyberpunk ========== */
+    [data-style="cyberpunk"] {
+      --font-heading: 'Space Grotesk', sans-serif;
+      --font-body: 'Inter', sans-serif;
+
+      --color-primary: #ff00ff;
+      --color-primary-hover: #cc00cc;
+      --color-secondary: #00ffff;
+      --color-accent: #ffff00;
+      --color-bg: #0a0a0f;
+      --color-surface: #12121a;
+      --color-text: #ffffff;
+      --color-text-muted: #888899;
+      --color-border: #ff00ff;
+      --color-success: #00ff00;
+      --color-warning: #ffff00;
+      --color-error: #ff0040;
+
+      --radius-md: 4px;
+      --border-width: 2px;
+      --shadow-md: 0 0 20px rgba(255, 0, 255, 0.5), 0 0 40px rgba(0, 255, 255, 0.3);
+    }
+
+    /* ========== Style: Corporate Clean ========== */
+    [data-style="corporate"] {
+      --font-heading: 'Inter', sans-serif;
+      --font-body: 'Inter', sans-serif;
+
+      --color-primary: #1e3a5f;
+      --color-primary-hover: #152e4d;
+      --color-secondary: #0369a1;
+      --color-accent: #059669;
+      --color-bg: #ffffff;
+      --color-surface: #f8fafc;
+      --color-text: #0f172a;
+      --color-text-muted: #64748b;
+      --color-border: #e2e8f0;
+      --color-success: #059669;
+      --color-warning: #d97706;
+      --color-error: #dc2626;
+
+      --radius-md: 6px;
+      --shadow-md: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* ========== Style: Organic ========== */
+    [data-style="organic"] {
+      --font-heading: 'Plus Jakarta Sans', sans-serif;
+      --font-body: 'Inter', sans-serif;
+
+      --color-primary: #6b9080;
+      --color-primary-hover: #5a7d6e;
+      --color-secondary: #a4c3b2;
+      --color-accent: #f6bd60;
+      --color-bg: #f4f1de;
+      --color-surface: #ffffff;
+      --color-text: #3d405b;
+      --color-text-muted: #6b705c;
+      --color-border: #cce3de;
+      --color-success: #6b9080;
+      --color-warning: #f6bd60;
+      --color-error: #e07a5f;
+
+      --radius-md: 24px;
+      --radius-lg: 32px;
+      --shadow-md: 0 10px 40px rgba(107, 144, 128, 0.15);
+    }
+
+    /* ========== Layout ========== */
+    .app {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--color-surface);
+      border: var(--border-width) solid var(--color-border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    [data-style="glass"] header {
+      backdrop-filter: var(--glass-blur);
+    }
+
+    .logo {
+      font-family: var(--font-heading);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    /* ========== Style Selector ========== */
+    .style-selector {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .style-btn {
+      padding: 8px 16px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 500;
+      background: transparent;
+      color: var(--color-text-muted);
+      border: var(--border-width) solid var(--color-border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .style-btn:hover {
+      color: var(--color-text);
+      border-color: var(--color-primary);
+    }
+
+    .style-btn.active {
+      background: var(--color-primary);
+      color: white;
+      border-color: var(--color-primary);
+    }
+
+    /* ========== Main Grid ========== */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ========== Preview Panel ========== */
+    .preview-panel {
+      background: var(--color-surface);
+      border: var(--border-width) solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+    }
+
+    [data-style="glass"] .preview-panel {
+      backdrop-filter: var(--glass-blur);
+    }
+
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: var(--color-text);
+    }
+
+    /* ========== Buttons ========== */
+    .button-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition);
+      border: var(--border-width) solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--color-primary);
+      color: white;
+      border-color: var(--color-primary);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-primary:hover {
+      background: var(--color-primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--color-primary);
+      border-color: var(--color-primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--color-primary);
+      color: white;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--color-text-muted);
+      border-color: var(--color-border);
+    }
+
+    .btn-ghost:hover {
+      color: var(--color-text);
+      border-color: var(--color-text);
+    }
+
+    /* ========== Cards ========== */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      background: var(--color-bg);
+      border: var(--border-width) solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      transition: all var(--transition);
+    }
+
+    [data-style="glass"] .card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: var(--glass-blur);
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+    }
+
+    .card-title {
+      font-family: var(--font-heading);
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .card-text {
+      font-size: 14px;
+      color: var(--color-text-muted);
+      line-height: 1.5;
+    }
+
+    .card-value {
+      font-family: var(--font-mono);
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .card-label {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      margin-top: 4px;
+    }
+
+    /* ========== Form Elements ========== */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--color-text);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      background: var(--color-bg);
+      color: var(--color-text);
+      border: var(--border-width) solid var(--color-border);
+      border-radius: var(--radius-md);
+      transition: all var(--transition);
+    }
+
+    [data-style="glass"] .form-input {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .form-input::placeholder {
+      color: var(--color-text-muted);
+    }
+
+    /* ========== Color Palette ========== */
+    .color-palette {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .color-swatch {
+      aspect-ratio: 1;
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 8px;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      transition: transform var(--transition);
+      border: var(--border-width) solid var(--color-border);
+    }
+
+    .color-swatch:hover {
+      transform: scale(1.05);
+    }
+
+    .color-swatch .label {
+      background: rgba(0,0,0,0.5);
+      color: white;
+      padding: 2px 4px;
+      border-radius: 2px;
+    }
+
+    /* ========== Token Panel ========== */
+    .token-panel {
+      background: var(--color-surface);
+      border: var(--border-width) solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      position: sticky;
+      top: 24px;
+    }
+
+    [data-style="glass"] .token-panel {
+      backdrop-filter: var(--glass-blur);
+    }
+
+    .token-list {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    .token-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .token-name {
+      color: var(--color-text-muted);
+    }
+
+    .token-value {
+      color: var(--color-primary);
+    }
+
+    .copy-btn {
+      width: 100%;
+      margin-top: 16px;
+      padding: 12px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 500;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .copy-btn:hover {
+      background: var(--color-primary-hover);
+    }
+
+    /* ========== Alerts ========== */
+    .alerts {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .alert {
+      padding: 16px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      border: var(--border-width) solid;
+    }
+
+    .alert-success {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: var(--color-success);
+      color: var(--color-success);
+    }
+
+    .alert-warning {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: var(--color-warning);
+      color: var(--color-warning);
+    }
+
+    .alert-error {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: var(--color-error);
+      color: var(--color-error);
+    }
+
+    /* ========== Data Table ========== */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .data-table th {
+      font-weight: 600;
+      color: var(--color-text-muted);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .data-table td {
+      font-family: var(--font-mono);
+    }
+
+    .profit { color: var(--color-success); }
+    .loss { color: var(--color-error); }
+
+    /* ========== Chart Placeholder ========== */
+    .chart-placeholder {
+      height: 200px;
+      background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-bg) 100%);
+      border: var(--border-width) solid var(--color-border);
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-text-muted);
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart-line {
+      position: absolute;
+      bottom: 40px;
+      left: 20px;
+      right: 20px;
+      height: 100px;
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    .chart-bar {
+      flex: 1;
+      background: var(--color-primary);
+      opacity: 0.6;
+      border-radius: 2px 2px 0 0;
+      transition: height 0.3s ease;
+    }
+
+    /* ========== Footer ========== */
+    footer {
+      margin-top: 48px;
+      padding: 24px;
+      text-align: center;
+      color: var(--color-text-muted);
+      font-size: 14px;
+    }
+
+    footer a {
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body data-style="clean">
+  <div class="app">
+    <header>
+      <div class="logo">UI Style Preview</div>
+      <div class="style-selector">
+        <button class="style-btn active" data-set-style="clean">Clean Minimal</button>
+        <button class="style-btn" data-set-style="dark-mode">Dark Mode</button>
+        <button class="style-btn" data-set-style="terminal">Terminal</button>
+        <button class="style-btn" data-set-style="glass">Glassmorphism</button>
+        <button class="style-btn" data-set-style="neubrutalism">Neubrutalism</button>
+        <button class="style-btn" data-set-style="cyberpunk">Cyberpunk</button>
+        <button class="style-btn" data-set-style="corporate">Corporate</button>
+        <button class="style-btn" data-set-style="organic">Organic</button>
+      </div>
+    </header>
+
+    <div class="main-grid">
+      <div class="preview-panel">
+        <h2 class="section-title">Buttons</h2>
+        <div class="button-grid">
+          <button class="btn btn-primary">Primary Action</button>
+          <button class="btn btn-secondary">Secondary</button>
+          <button class="btn btn-ghost">Ghost Button</button>
+        </div>
+
+        <h2 class="section-title">Metric Cards</h2>
+        <div class="card-grid">
+          <div class="card">
+            <div class="card-value">+127.3%</div>
+            <div class="card-label">Total Return</div>
+          </div>
+          <div class="card">
+            <div class="card-value">2.14</div>
+            <div class="card-label">Sharpe Ratio</div>
+          </div>
+          <div class="card">
+            <div class="card-value">-11.8%</div>
+            <div class="card-label">Max Drawdown</div>
+          </div>
+        </div>
+
+        <h2 class="section-title">Chart</h2>
+        <div class="chart-placeholder">
+          <div class="chart-line" id="chart"></div>
+        </div>
+
+        <h2 class="section-title">Form Elements</h2>
+        <div class="form-group">
+          <label class="form-label">Strategy Name</label>
+          <input type="text" class="form-input" placeholder="Enter strategy name...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Initial Capital</label>
+          <input type="text" class="form-input" placeholder="$100,000">
+        </div>
+
+        <h2 class="section-title">Alerts</h2>
+        <div class="alerts">
+          <div class="alert alert-success">Backtest completed successfully. 847 trades executed.</div>
+          <div class="alert alert-warning">Warning: High drawdown detected in Q3 2022.</div>
+          <div class="alert alert-error">Error: Insufficient data for selected date range.</div>
+        </div>
+
+        <h2 class="section-title">Data Table</h2>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Action</th>
+              <th>Price</th>
+              <th>P&amp;L</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>2024-01-15</td>
+              <td>BUY</td>
+              <td>$142.50</td>
+              <td class="profit">+$1,250</td>
+            </tr>
+            <tr>
+              <td>2024-01-18</td>
+              <td>SELL</td>
+              <td>$148.75</td>
+              <td class="profit">+$3,125</td>
+            </tr>
+            <tr>
+              <td>2024-01-22</td>
+              <td>BUY</td>
+              <td>$145.00</td>
+              <td class="loss">-$875</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2 class="section-title">Color Palette</h2>
+        <div class="color-palette" id="palette"></div>
+      </div>
+
+      <div class="token-panel">
+        <h2 class="section-title">CSS Tokens</h2>
+        <div class="token-list" id="tokenList"></div>
+        <button class="copy-btn" id="copyBtn">Copy CSS Variables</button>
+      </div>
+    </div>
+
+    <footer>
+      <p>UI Style Preview | Part of Claude Skills UI System</p>
+      <p>Click any style button to preview different design systems</p>
+    </footer>
+  </div>
+
+  <script>
+    // Style configurations - all hardcoded, no user input
+    const styles = {
+      'clean': {
+        name: 'Clean Minimal',
+        colors: {
+          primary: '#2563eb',
+          'primary-hover': '#1d4ed8',
+          secondary: '#64748b',
+          accent: '#f59e0b',
+          bg: '#ffffff',
+          surface: '#f8fafc',
+          text: '#1e293b',
+          'text-muted': '#64748b',
+          border: '#e2e8f0',
+          success: '#22c55e',
+          warning: '#f59e0b',
+          error: '#ef4444'
+        }
+      },
+      'dark-mode': {
+        name: 'Dark Mode Native',
+        colors: {
+          primary: '#3b82f6',
+          'primary-hover': '#60a5fa',
+          secondary: '#64748b',
+          accent: '#22c55e',
+          bg: '#0a0a0a',
+          surface: '#141414',
+          text: '#f4f4f5',
+          'text-muted': '#71717a',
+          border: '#292929',
+          success: '#22c55e',
+          warning: '#f59e0b',
+          error: '#ef4444'
+        }
+      },
+      'terminal': {
+        name: 'Terminal Matrix',
+        colors: {
+          primary: '#00ff41',
+          'primary-hover': '#00cc33',
+          secondary: '#006b1a',
+          accent: '#ffff00',
+          bg: '#000000',
+          surface: '#0a0a0a',
+          text: '#00ff41',
+          'text-muted': '#006b1a',
+          border: '#00ff41',
+          success: '#00ff41',
+          warning: '#ffff00',
+          error: '#ff0040'
+        }
+      },
+      'glass': {
+        name: 'Glassmorphism',
+        colors: {
+          primary: '#6366f1',
+          'primary-hover': '#4f46e5',
+          secondary: '#06b6d4',
+          accent: '#10b981',
+          bg: '#0f172a',
+          surface: 'rgba(30, 41, 59, 0.8)',
+          text: '#f8fafc',
+          'text-muted': '#94a3b8',
+          border: 'rgba(255, 255, 255, 0.1)',
+          success: '#10b981',
+          warning: '#f59e0b',
+          error: '#f43f5e'
+        }
+      },
+      'neubrutalism': {
+        name: 'Neubrutalism',
+        colors: {
+          primary: '#ff6b6b',
+          'primary-hover': '#ee5a5a',
+          secondary: '#4ecdc4',
+          accent: '#ffe66d',
+          bg: '#f7f7f7',
+          surface: '#ffffff',
+          text: '#2d3436',
+          'text-muted': '#636e72',
+          border: '#2d3436',
+          success: '#00b894',
+          warning: '#fdcb6e',
+          error: '#d63031'
+        }
+      },
+      'cyberpunk': {
+        name: 'Cyberpunk',
+        colors: {
+          primary: '#ff00ff',
+          'primary-hover': '#cc00cc',
+          secondary: '#00ffff',
+          accent: '#ffff00',
+          bg: '#0a0a0f',
+          surface: '#12121a',
+          text: '#ffffff',
+          'text-muted': '#888899',
+          border: '#ff00ff',
+          success: '#00ff00',
+          warning: '#ffff00',
+          error: '#ff0040'
+        }
+      },
+      'corporate': {
+        name: 'Corporate Clean',
+        colors: {
+          primary: '#1e3a5f',
+          'primary-hover': '#152e4d',
+          secondary: '#0369a1',
+          accent: '#059669',
+          bg: '#ffffff',
+          surface: '#f8fafc',
+          text: '#0f172a',
+          'text-muted': '#64748b',
+          border: '#e2e8f0',
+          success: '#059669',
+          warning: '#d97706',
+          error: '#dc2626'
+        }
+      },
+      'organic': {
+        name: 'Organic',
+        colors: {
+          primary: '#6b9080',
+          'primary-hover': '#5a7d6e',
+          secondary: '#a4c3b2',
+          accent: '#f6bd60',
+          bg: '#f4f1de',
+          surface: '#ffffff',
+          text: '#3d405b',
+          'text-muted': '#6b705c',
+          border: '#cce3de',
+          success: '#6b9080',
+          warning: '#f6bd60',
+          error: '#e07a5f'
+        }
+      }
+    };
+
+    // Generate chart bars using DOM methods (safe)
+    function generateChart() {
+      const chart = document.getElementById('chart');
+      while (chart.firstChild) {
+        chart.removeChild(chart.firstChild);
+      }
+      const heights = [30, 45, 35, 60, 50, 70, 55, 80, 65, 75, 85, 70, 90, 75, 95, 80, 85, 90, 95, 100];
+      heights.forEach(function(h) {
+        const bar = document.createElement('div');
+        bar.className = 'chart-bar';
+        bar.style.height = h + '%';
+        chart.appendChild(bar);
+      });
+    }
+
+    // Generate color palette using DOM methods (safe)
+    function generatePalette(styleKey) {
+      const palette = document.getElementById('palette');
+      while (palette.firstChild) {
+        palette.removeChild(palette.firstChild);
+      }
+      const colors = styles[styleKey].colors;
+      const colorOrder = ['primary', 'secondary', 'accent', 'success', 'warning', 'error', 'bg', 'surface', 'text', 'text-muted', 'border'];
+
+      colorOrder.forEach(function(key) {
+        if (colors[key]) {
+          const swatch = document.createElement('div');
+          swatch.className = 'color-swatch';
+          swatch.style.background = colors[key];
+          swatch.title = 'Click to copy: ' + colors[key];
+
+          const label = document.createElement('span');
+          label.className = 'label';
+          label.textContent = key;
+          swatch.appendChild(label);
+
+          swatch.addEventListener('click', function() {
+            copyToClipboard(colors[key]);
+          });
+          palette.appendChild(swatch);
+        }
+      });
+    }
+
+    // Generate token list using DOM methods (safe)
+    function generateTokenList(styleKey) {
+      const tokenList = document.getElementById('tokenList');
+      while (tokenList.firstChild) {
+        tokenList.removeChild(tokenList.firstChild);
+      }
+      const colors = styles[styleKey].colors;
+
+      Object.keys(colors).forEach(function(key) {
+        const value = colors[key];
+        const item = document.createElement('div');
+        item.className = 'token-item';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'token-name';
+        nameSpan.textContent = '--color-' + key;
+
+        const valueSpan = document.createElement('span');
+        valueSpan.className = 'token-value';
+        valueSpan.textContent = value;
+
+        item.appendChild(nameSpan);
+        item.appendChild(valueSpan);
+        tokenList.appendChild(item);
+      });
+    }
+
+    // Copy to clipboard
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(function() {
+        alert('Copied: ' + text);
+      });
+    }
+
+    // Copy all CSS variables
+    document.getElementById('copyBtn').addEventListener('click', function() {
+      const styleKey = document.body.dataset.style;
+      const colors = styles[styleKey].colors;
+      let css = ':root {\n';
+      Object.keys(colors).forEach(function(key) {
+        css += '  --color-' + key + ': ' + colors[key] + ';\n';
+      });
+      css += '}';
+      copyToClipboard(css);
+    });
+
+    // Style switcher
+    document.querySelectorAll('[data-set-style]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        const style = btn.dataset.setStyle;
+        document.body.dataset.style = style;
+
+        // Update active button
+        document.querySelectorAll('.style-btn').forEach(function(b) {
+          b.classList.remove('active');
+        });
+        btn.classList.add('active');
+
+        // Update palette and tokens
+        generatePalette(style);
+        generateTokenList(style);
+      });
+    });
+
+    // Initialize
+    generateChart();
+    generatePalette('clean');
+    generateTokenList('clean');
+  </script>
+</body>
+</html>
