@@ -206,6 +206,66 @@ xl: 1280px  /* 大桌面 */
 
 ---
 
+## 風格選擇速查
+
+### 風格系統總覽
+
+```
+產品類型 → industry.md → 主推風格
+              ↓
+         風格群組.md → Token 調整
+              ↓
+         palettes.md → 配色方案
+              ↓
+         font-pairs.md → 字體配對
+```
+
+### 6 大風格群組
+
+| 群組 | 特徵 | 適用 | 檔案 |
+|------|------|------|------|
+| **Minimalist** | 簡潔、留白、功能性 | SaaS、工具 | `styles/minimalist.md` |
+| **Dimensional** | 玻璃、深度、光影 | 現代 App | `styles/dimensional.md` |
+| **Bold** | 大膽、撞色、醒目 | 創意、年輕 | `styles/bold.md` |
+| **Organic** | 自然、柔和、手繪 | 健康、環保 | `styles/organic.md` |
+| **Tech** | 科技、霓虹、深色 | 遊戲、科技 | `styles/tech.md` |
+| **Classic** | 專業、網格、傳統 | 企業、金融 | `styles/classic.md` |
+
+### 產業快速匹配
+
+| 產業 | 首選風格 | 次選 |
+|------|----------|------|
+| SaaS/工具 | Clean Minimal | Glassmorphism |
+| 金融/銀行 | Corporate Clean | Swiss Grid |
+| 醫療/健康 | Soft Minimal | Nature-inspired |
+| 電商/時尚 | Editorial | Bold Minimal |
+| 遊戲/娛樂 | Cyberpunk | Neon Glow |
+| 創意/設計 | Neubrutalism | Maximalist |
+
+完整產業映射 → `references/styles/industry.md`
+
+### 多風格提案
+
+當需要提供多個設計選項時：
+
+1. 查閱 `styles/industry.md` → 匹配產業主推風格
+2. 讀取對應 `styles/[group].md` → 獲取 Token 調整
+3. 選擇 `palettes.md` → 配色方案
+4. 選擇 `font-pairs.md` → 字體配對
+5. 使用 `templates/multi-style-proposal.md` → 輸出格式
+
+### 風格資源
+
+| 資源 | 檔案 |
+|------|------|
+| 風格總覽 | `references/styles/index.md` |
+| 產業映射 | `references/styles/industry.md` |
+| 配色方案 | `references/palettes.md` |
+| 字體配對 | `references/font-pairs.md` |
+| 提案模板 | `templates/multi-style-proposal.md` |
+
+---
+
 ## Checklist
 
 - [ ] 色彩對比度符合標準

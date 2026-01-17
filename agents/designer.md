@@ -42,14 +42,27 @@ Read: ~/.claude/skills/ui/references/components.md
 ```
 ~/.claude/skills/ui/
 ├── SKILL.md                  # 總覽（必讀）
-└── references/
-    ├── tokens.md             # ⭐ 必讀：顏色、間距、字體、圓角
-    ├── components.md         # ⭐ 必讀：Button、Input、Card 規格
-    ├── color-theory.md       # 色彩理論、60-30-10 法則
-    ├── motion-design.md      # 動效設計、Duration、Easing
-    ├── dark-mode.md          # 深色模式設計
-    ├── typography-advanced.md # 進階字體排版
-    └── design-system-arch.md # 設計系統架構
+├── references/
+│   ├── tokens.md             # ⭐ 必讀：顏色、間距、字體、圓角
+│   ├── components.md         # ⭐ 必讀：Button、Input、Card 規格
+│   ├── color-theory.md       # 色彩理論、60-30-10 法則
+│   ├── motion-design.md      # 動效設計、Duration、Easing
+│   ├── dark-mode.md          # 深色模式設計
+│   ├── typography-advanced.md # 進階字體排版
+│   ├── design-system-arch.md # 設計系統架構
+│   ├── palettes.md           # ⭐ 96+ 產業配色方案
+│   ├── font-pairs.md         # ⭐ 57+ 字體配對
+│   └── styles/               # 風格系統（多風格生成用）
+│       ├── index.md          # 風格總覽 + 選擇指南
+│       ├── industry.md       # ⭐ 產業風格映射
+│       ├── minimalist.md     # 極簡風格群組
+│       ├── dimensional.md    # 立體風格群組
+│       ├── bold.md           # 大膽風格群組
+│       ├── organic.md        # 有機風格群組
+│       ├── tech.md           # 科技風格群組
+│       └── classic.md        # 經典風格群組
+└── templates/
+    └── multi-style-proposal.md # 多風格提案模板
 ```
 
 **UX Skill** - 體驗規範
@@ -80,6 +93,7 @@ Read: ~/.claude/skills/ui/references/components.md
 
 | 任務類型 | 必讀 |
 |----------|------|
+| **多風格提案** | ui/styles/industry.md + ui/palettes.md + ui/font-pairs.md |
 | **任何 UI 設計** | ui/tokens.md + ui/components.md |
 | **新頁面佈局** | ux/patterns.md（導航） + ux/psychology.md |
 | **表單設計** | ux/patterns.md（表單） + ux/SKILL.md（錯誤處理） |
@@ -98,6 +112,56 @@ Read: ~/.claude/skills/ui/references/components.md
 4. 測試 Hover/Click 等互動狀態
 
 **agent-browser 使用範例**請參考 `~/.claude/skills/browser/references/scenarios.md`
+
+## 多風格生成流程
+
+當用戶需要多個設計選項時，使用此流程產出 3-5 個風格方案：
+
+### 執行步驟
+
+```
+用戶輸入（產品類型/受眾/品牌調性）
+         ↓
+Step 1: Read ui/styles/industry.md
+        → 根據產業匹配 2-3 個主推風格
+         ↓
+Step 2: Read ui/styles/[group].md
+        → 獲取每個風格的 Token 調整
+         ↓
+Step 3: Read ui/palettes.md
+        → 選擇適合的配色方案
+         ↓
+Step 4: Read ui/font-pairs.md
+        → 選擇配套字體
+         ↓
+Step 5: Read ux/decision-rules.md
+        → 驗證選擇是否違反設計規則
+         ↓
+Step 6: Use ui/templates/multi-style-proposal.md
+        → 依模板輸出 3-5 個方案
+```
+
+### 輸出範例
+
+```markdown
+## 方案比較
+
+| 方案 | 風格 | 適合 | 風險 |
+|------|------|------|------|
+| A | Clean Minimal | 專業、穩定 | 較無特色 |
+| B | Glassmorphism | 現代、高端 | 效能考量 |
+| C | Neubrutalism | 大膽、差異化 | 保守用戶排斥 |
+
+→ 推薦：方案 A（主流）+ 方案 B（備選）
+```
+
+### 驗證 Checklist
+
+- [ ] 每個方案有完整配色
+- [ ] 每個方案有字體配對
+- [ ] 標註適用/不適用場景
+- [ ] 提供風險說明
+- [ ] 給出明確推薦
 
 ## Design Process
 
