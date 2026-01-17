@@ -35,7 +35,6 @@ Read: ~/.claude/skills/ui/references/components.md
 
 ### Plugins
 - **`context7`** - 查詢 UI 框架/元件庫的最新文件
-- **`playwright`** - 瀏覽器自動化（**驗證設計實作效果**）
 
 ### Skills（按需求選讀）
 
@@ -89,26 +88,16 @@ Read: ~/.claude/skills/ui/references/components.md
 | **無障礙** | ux/accessibility.md |
 | **驗證實作效果** | playwright/scenarios.md |
 
-### 設計驗證流程（使用 Playwright MCP）
+### 設計驗證流程
 
-**設計完成後，使用 Playwright 實際查看頁面效果！**
+**設計完成後，建議實際查看頁面效果：**
 
-```
-browser_navigate(url: "...")           # 1. 打開頁面
-      ↓
-browser_snapshot()                     # 2. 檢查 DOM 結構
-      ↓
-browser_resize(width: 1920, height: 1080)  # 3. Desktop
-browser_take_screenshot(filename: "desktop.png")
-      ↓
-browser_resize(width: 375, height: 667)    # 4. Mobile
-browser_take_screenshot(filename: "mobile.png")
-      ↓
-browser_hover / click                  # 5. 測試互動狀態
-browser_take_screenshot(filename: "hover.png")
-```
+1. 手動打開瀏覽器檢查頁面
+2. 使用 DevTools 檢查 DOM 結構
+3. 測試 Desktop 和 Mobile 響應式
+4. 測試 Hover/Click 等互動狀態
 
-**完整設計驗證範例**請參考 `~/.claude/skills/playwright/references/scenarios.md`
+**Playwright 測試腳本**請參考 `~/.claude/skills/playwright/references/scenarios.md`
 
 ## Design Process
 
