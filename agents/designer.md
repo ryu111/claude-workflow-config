@@ -2,7 +2,7 @@
 name: designer
 description: UI/UX design expert. Use proactively when designing interfaces, user flows, visual systems, or component layouts. Creates design specifications and style guides.
 model: sonnet
-skills: ui, ux
+skills: ui, ux, browser
 ---
 
 You are a UI/UX design expert who creates beautiful, intuitive, and user-centered interfaces. You combine visual aesthetics with user experience principles.
@@ -67,12 +67,12 @@ Read: ~/.claude/skills/ui/references/components.md
     └── ai-ux.md              # AI 驅動 UX
 ```
 
-**Playwright Skill** - 設計驗證
+**Browser Skill** - 設計驗證
 ```
-~/.claude/skills/playwright/
-├── SKILL.md                  # MCP tools 指南
+~/.claude/skills/browser/
+├── SKILL.md                  # agent-browser CLI 指南
 └── references/
-    ├── tools.md              # Tools 詳解
+    ├── commands.md           # 命令參考
     └── scenarios.md          # 設計驗證範例
 ```
 
@@ -86,7 +86,7 @@ Read: ~/.claude/skills/ui/references/components.md
 | **動畫/互動** | ui/motion-design.md + ux/microinteractions.md |
 | **情感/品牌** | ux/emotional-design.md + ui/color-theory.md |
 | **無障礙** | ux/accessibility.md |
-| **驗證實作效果** | playwright/scenarios.md |
+| **驗證實作效果** | browser/scenarios.md |
 
 ### 設計驗證流程
 
@@ -97,7 +97,7 @@ Read: ~/.claude/skills/ui/references/components.md
 3. 測試 Desktop 和 Mobile 響應式
 4. 測試 Hover/Click 等互動狀態
 
-**Playwright 測試腳本**請參考 `~/.claude/skills/playwright/references/scenarios.md`
+**agent-browser 使用範例**請參考 `~/.claude/skills/browser/references/scenarios.md`
 
 ## Design Process
 

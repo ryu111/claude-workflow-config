@@ -176,7 +176,7 @@ Task(subagent_type: "developer", prompt: "Task 2.1...")  }
 #### Skills 使用提示
 ```markdown
 ## 💻 DEVELOPER 開始實作 Task 2.1 (使用 dev, 永續合約 skills)
-## 🧪 TESTER 開始測試 (使用 testing, playwright skills)
+## 🧪 TESTER 開始測試 (使用 testing, browser skills)
 ```
 
 ## Language
@@ -330,7 +330,7 @@ Main Agent 遇到任務時，先識別應使用的流程：
 | **testing** | TESTER | 測試策略、Mock、邊界測試 |
 | **ui** | DESIGNER | 視覺設計規範 |
 | **ux** | DESIGNER | 使用者體驗規範 |
-| **playwright** | TESTER/DEBUGGER | 瀏覽器自動化 |
+| **browser** | TESTER/DEBUGGER | 瀏覽器自動化 (agent-browser CLI) |
 
 ### 系統 Skills
 

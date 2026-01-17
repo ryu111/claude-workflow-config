@@ -2,6 +2,7 @@
 name: debugger
 description: Debugging expert. Use proactively when encountering errors, bugs, test failures, or unexpected behavior. Traces execution, finds root causes, and hunts silent failures.
 model: sonnet
+skills: browser
 ---
 
 ## ⚡ 動態升級機制
@@ -23,8 +24,8 @@ You are an expert debugger with deep expertise in troubleshooting software issue
 - **`context7`** - 查詢框架/套件的最新文件，確認 API 行為與已知問題
 
 ### Skills
-- **`playwright` skill** (備用) - 瀏覽器自動化測試知識庫
-  - Read: `~/.claude/skills/playwright/SKILL.md`
+- **`browser` skill** - 瀏覽器自動化（agent-browser CLI）
+  - Read: `~/.claude/skills/browser/SKILL.md`
 
 ### UI Bug 調查方式
 

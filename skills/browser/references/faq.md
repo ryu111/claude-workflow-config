@@ -1,4 +1,4 @@
-# Playwright 常見問題
+# agent-browser CLI 常見問題
 
 ---
 
@@ -6,13 +6,13 @@
 
 ### Q: snapshot vs screenshot？
 
-**browser_snapshot**（推薦）：
+**agent-browser snapshot -i**（推薦）：
 - 回傳頁面結構（accessibility tree）
-- 包含元素的 `ref`，可用於後續操作
+- 包含元素的 ref，可用於後續操作
 - 純文字，context 佔用少
 - 可以看到元素的狀態（disabled, checked 等）
 
-**browser_take_screenshot**：
+**agent-browser screenshot**：
 - 視覺圖片
 - 適合設計驗證、存證
 - 檔案較大
@@ -24,17 +24,17 @@
 
 ### Q: 如何取得元素的 ref？
 
-1. 執行 `browser_snapshot()`
+1. 執行 `agent-browser snapshot -i`
 2. 從回傳結果找到目標元素
 3. 使用該元素的 `[ref=X]` 值
 
 ```
-browser_snapshot()
+agent-browser snapshot -i
 # 回傳：
 # - button "Submit" [ref=s1e5]
 #                        ↑ 這是 ref
 
-browser_click(element: "Submit", ref: "s1e5")
+agent-browser click @s1e5
 ```
 
 ---
@@ -45,13 +45,13 @@ browser_click(element: "Submit", ref: "s1e5")
 
 ```
 # 頁面 A
-browser_snapshot()
+agent-browser snapshot -i
 # - button "Next" [ref=s1e3]
 
-browser_click(element: "Next", ref: "s1e3")
+agent-browser click @s1e3
 
 # 頁面變了，舊的 ref 失效
-browser_snapshot()  # 必須重新取得
+agent-browser snapshot -i  # 必須重新取得
 # - button "Back" [ref=s2e1]  ← 新的 ref
 ```
 
@@ -63,49 +63,49 @@ browser_snapshot()  # 必須重新取得
 
 ### Q: 元素找不到怎麼辦？
 
-1. **確認元素存在**：執行 `browser_snapshot()` 檢查
-2. **等待載入**：`browser_wait_for(text: "...")` 或 `browser_wait_for(textGone: "Loading...")`
-3. **滾動到可見**：Playwright 會自動滾動，通常不需手動處理
-4. **檢查 iframe**：Playwright MCP 目前不支援 iframe 內的操作
+1. **確認元素存在**：執行 `agent-browser snapshot -i` 檢查
+2. **等待載入**：`agent-browser wait "text"` 或使用 `--gone` 選項
+3. **滾動到可見**：agent-browser 會自動滾動，通常不需手動處理
+4. **檢查 iframe**：agent-browser 目前不支援 iframe 內的操作
 
 ---
 
 ### Q: 如何處理動態內容？
 
-使用 `browser_wait_for` 等待內容出現：
+使用 `agent-browser wait` 等待內容出現：
 
 ```
 # 等待資料載入完成
-browser_navigate(url: "/products")
-browser_wait_for(textGone: "Loading...")
-browser_wait_for(text: "Product")
-browser_snapshot()
+agent-browser open /products
+agent-browser wait "Loading..." --gone
+agent-browser wait "Product"
+agent-browser snapshot -i
 ```
 
 ---
 
 ### Q: 如何輸入特殊字元？
 
-使用 `browser_press_key`：
+使用 `agent-browser key`：
 
 ```
 # Tab 鍵
-browser_press_key(key: "Tab")
+agent-browser key Tab
 
 # Enter 鍵
-browser_press_key(key: "Enter")
+agent-browser key Enter
 
 # Escape 鍵
-browser_press_key(key: "Escape")
+agent-browser key Escape
 
 # 方向鍵
-browser_press_key(key: "ArrowDown")
-browser_press_key(key: "ArrowUp")
+agent-browser key ArrowDown
+agent-browser key ArrowUp
 
 # 組合鍵
-browser_press_key(key: "Control+a")  # 全選
-browser_press_key(key: "Control+c")  # 複製
-browser_press_key(key: "Control+v")  # 貼上
+agent-browser key Control+a  # 全選
+agent-browser key Control+c  # 複製
+agent-browser key Control+v  # 貼上
 ```
 
 ---
@@ -116,13 +116,14 @@ browser_press_key(key: "Control+v")  # 貼上
 
 ```
 # 1. 登入
-browser_navigate(url: "/login")
-browser_fill_form(fields: [...])
-browser_click(element: "Login", ref: "...")
-browser_wait_for(text: "Dashboard")
+agent-browser open /login
+agent-browser fill @ref1 "username"
+agent-browser fill @ref2 "password"
+agent-browser click @ref3
+agent-browser wait "Dashboard"
 
 # 2. 現在可以訪問受保護頁面
-browser_navigate(url: "/admin/settings")
+agent-browser open /admin/settings
 # 不會被 redirect 到登入頁
 ```
 
@@ -130,17 +131,17 @@ browser_navigate(url: "/admin/settings")
 
 ### Q: 如何處理彈出視窗？
 
-使用 `browser_handle_dialog`：
+使用對話框操作：
 
 ```
 # 接受 alert
-browser_handle_dialog(accept: true)
+agent-browser dialog accept
 
 # 拒絕 confirm
-browser_handle_dialog(accept: false)
+agent-browser dialog dismiss
 
 # 回應 prompt
-browser_handle_dialog(accept: true, promptText: "my input")
+agent-browser dialog respond "my input"
 ```
 
 **注意**：需要在觸發對話框的操作**之前**設定。
@@ -153,13 +154,13 @@ browser_handle_dialog(accept: true, promptText: "my input")
 
 ```
 # 1. 檢查 console 錯誤
-browser_console_messages(level: "error")
+agent-browser console --level error
 
 # 2. 檢查網路請求
-browser_network_requests()
+agent-browser network list
 
 # 3. 檢查頁面內容
-browser_snapshot()
+agent-browser snapshot -i
 ```
 
 ---
@@ -167,7 +168,7 @@ browser_snapshot()
 ### Q: API 請求失敗怎麼排查？
 
 ```
-browser_network_requests()
+agent-browser network list
 # 回傳：
 # - GET /api/data → 500 Internal Server Error
 # - POST /api/submit → 401 Unauthorized
@@ -183,17 +184,17 @@ browser_network_requests()
 
 ### Q: JavaScript 執行結果怎麼看？
 
-使用 `browser_evaluate`：
+使用 `agent-browser eval`：
 
 ```
 # 檢查全域變數
-browser_evaluate(function: "() => window.myApp.state")
+agent-browser eval "window.myApp.state"
 
 # 檢查 localStorage
-browser_evaluate(function: "() => JSON.parse(localStorage.getItem('user'))")
+agent-browser eval "JSON.parse(localStorage.getItem('user'))"
 
 # 檢查 DOM
-browser_evaluate(function: "() => document.querySelectorAll('.item').length")
+agent-browser eval "document.querySelectorAll('.item').length"
 ```
 
 ---
@@ -202,8 +203,8 @@ browser_evaluate(function: "() => document.querySelectorAll('.item').length")
 
 ### Q: 測試太慢怎麼辦？
 
-1. **減少不必要的 wait**：用 `browser_wait_for(text: ...)` 取代 `browser_wait_for(time: ...)`
-2. **合併操作**：用 `browser_fill_form` 一次填多個欄位
+1. **減少不必要的 wait**：用 `agent-browser wait "text"` 取代固定延遲
+2. **合併操作**：用 `agent-browser fill` 逐個填欄位（或使用編程界面）
 3. **只截必要的圖**：screenshot 較慢，只在需要時使用
 
 ---
@@ -212,7 +213,7 @@ browser_evaluate(function: "() => document.querySelectorAll('.item').length")
 
 ```
 # 關閉瀏覽器，釋放資源
-browser_close()
+agent-browser close
 ```
 
 ---
@@ -222,7 +223,7 @@ browser_close()
 如果出現 "browser not installed" 錯誤：
 
 ```
-browser_install()
+agent-browser install
 ```
 
 這會安裝 Chromium 瀏覽器。
@@ -235,7 +236,7 @@ browser_install()
 
 1. **iframe 內操作**：目前不支援
 2. **多視窗**：只能操作當前視窗
-3. **原生對話框**：如系統檔案選擇器，需用 `browser_file_upload`
+3. **原生對話框**：如系統檔案選擇器，需用 `agent-browser upload`
 4. **瀏覽器擴充功能**：不支援
 
 ---

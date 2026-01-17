@@ -1,12 +1,12 @@
-# Playwright 與 D→R→T 工作流整合
+# Agent-Browser 與 D→R→T 工作流整合
 
-說明 REVIEWER 和 TESTER 如何使用 Playwright 驗證 UI。
+說明 REVIEWER 和 TESTER 如何使用 agent-browser 驗證 UI。
 
 ## 核心原則
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│  UI 程式碼變更 = 必須用 Playwright 驗證                    │
+│  UI 程式碼變更 = 必須用 agent-browser 驗證                │
 │  有設計規格 = 必須對照驗證                                 │
 │  發現 UI Bug = 必須截圖存證                                │
 └────────────────────────────────────────────────────────────┘
@@ -14,11 +14,11 @@
 
 ---
 
-## REVIEWER 使用 Playwright
+## REVIEWER 使用 Agent-Browser
 
 ### 使用時機
 
-REVIEWER 在以下情況**必須**使用 Playwright：
+REVIEWER 在以下情況**必須**使用 agent-browser：
 
 | 情況 | 驗證內容 | 優先級 |
 |------|----------|--------|
@@ -37,7 +37,7 @@ REVIEWER 在以下情況**必須**使用 Playwright：
     ↓
 3. 讀取設計規格（如有）
     ↓
-4. 使用 Playwright 快速驗證
+4. 使用 agent-browser 快速驗證
     ↓
 5. 發現問題 → REJECT + 截圖存證
 6. 通過 → APPROVE（進入 TESTER）
@@ -47,64 +47,56 @@ REVIEWER 在以下情況**必須**使用 Playwright：
 
 **情境**：DEVELOPER 修改了 `Button.tsx`，加入新的 `primary` 樣式。
 
-```javascript
-// ========== Step 1: 讀取變更 ==========
-// (讀取 git diff)
-// + background: var(--color-primary);
-// + color: var(--color-white);
-// + &:hover { background: var(--color-primary-dark); }
+```bash
+# ========== Step 1: 讀取變更 ==========
+# (讀取 git diff)
+# + background: var(--color-primary);
+# + color: var(--color-white);
+# + &:hover { background: var(--color-primary-dark); }
 
-// ========== Step 2: 識別需要驗證的點 ==========
-// - 背景顏色使用 token ✓
-// - Hover 狀態存在 ✓
-// - 需要驗證：實際顯示效果
+# ========== Step 2: 識別需要驗證的點 ==========
+# - 背景顏色使用 token ✓
+# - Hover 狀態存在 ✓
+# - 需要驗證：實際顯示效果
 
-// ========== Step 3: 使用 Playwright 驗證 ==========
-browser_navigate(url: "http://localhost:3000/components/button")
-browser_snapshot()
+# ========== Step 3: 使用 agent-browser 驗證 ==========
+agent-browser navigate http://localhost:3000/components/button
+agent-browser screenshot
 
-// 驗證背景顏色
-browser_evaluate(
-  element: "Primary button",
-  ref: "s1e5",
-  function: `(element) => {
-    const style = window.getComputedStyle(element);
-    const root = window.getComputedStyle(document.documentElement);
+# 驗證背景顏色
+agent-browser evaluate "Primary button" @ref s1e5 << 'EOF'
+(element) => {
+  const style = window.getComputedStyle(element);
+  const root = window.getComputedStyle(document.documentElement);
 
-    return {
-      bg: style.backgroundColor,
-      expectedBg: root.getPropertyValue('--color-primary').trim(),
-      matches: style.backgroundColor === root.getPropertyValue('--color-primary').trim()
-    };
-  }`
-)
-// ✅ { matches: true }
+  return {
+    bg: style.backgroundColor,
+    expectedBg: root.getPropertyValue('--color-primary').trim(),
+    matches: style.backgroundColor === root.getPropertyValue('--color-primary').trim()
+  };
+}
+EOF
+# ✅ { matches: true }
 
-// 驗證 Hover 狀態
-browser_hover(element: "Primary button", ref: "s1e5")
-browser_evaluate(
-  element: "Primary button",
-  ref: "s1e5",
-  function: `(element) => {
-    const hoverBg = window.getComputedStyle(element).backgroundColor;
-    const root = window.getComputedStyle(document.documentElement);
-    const expectedHoverBg = root.getPropertyValue('--color-primary-dark').trim();
+# 驗證 Hover 狀態
+agent-browser hover "Primary button" @ref s1e5
+agent-browser evaluate "Primary button" @ref s1e5 << 'EOF'
+(element) => {
+  const hoverBg = window.getComputedStyle(element).backgroundColor;
+  const root = window.getComputedStyle(document.documentElement);
+  const expectedHoverBg = root.getPropertyValue('--color-primary-dark').trim();
 
-    return {
-      hoverBg: hoverBg,
-      expectedHoverBg: expectedHoverBg,
-      matches: hoverBg === expectedHoverBg
-    };
-  }`
-)
-// ❌ { matches: false } → REJECT
+  return {
+    hoverBg: hoverBg,
+    expectedHoverBg: expectedHoverBg,
+    matches: hoverBg === expectedHoverBg
+  };
+}
+EOF
+# ❌ { matches: false } → REJECT
 
-// ========== Step 4: 截圖存證 + 回報 ==========
-browser_take_screenshot(
-  element: "Primary button",
-  ref: "s1e5",
-  filename: "review/button-hover-issue.png"
-)
+# ========== Step 4: 截圖存證 + 回報 ==========
+agent-browser screenshot -e "Primary button" @ref s1e5 -o review/button-hover-issue.png
 ```
 
 **REVIEWER 回報**：
@@ -137,40 +129,38 @@ Button hover 狀態顏色不符合 Design Token。
 
 **情境**：DEVELOPER 修改了全域 CSS，調整了 `--spacing-md`。
 
-```javascript
-// ========== 驗證是否影響現有佈局 ==========
-browser_navigate(url: "http://localhost:3000")
-browser_snapshot()
+```bash
+# ========== 驗證是否影響現有佈局 ==========
+agent-browser navigate http://localhost:3000
+agent-browser screenshot
 
-// 檢查卡片間距
-browser_evaluate(
-  element: "card grid",
-  ref: "s1e10",
-  function: `(element) => {
-    const cards = Array.from(element.children);
-    const gaps = [];
+# 檢查卡片間距
+agent-browser evaluate "card grid" @ref s1e10 << 'EOF'
+(element) => {
+  const cards = Array.from(element.children);
+  const gaps = [];
 
-    for (let i = 0; i < cards.length - 1; i++) {
-      const rect1 = cards[i].getBoundingClientRect();
-      const rect2 = cards[i + 1].getBoundingClientRect();
-      const gap = rect2.top - rect1.bottom;
-      gaps.push(gap);
-    }
+  for (let i = 0; i < cards.length - 1; i++) {
+    const rect1 = cards[i].getBoundingClientRect();
+    const rect2 = cards[i + 1].getBoundingClientRect();
+    const gap = rect2.top - rect1.bottom;
+    gaps.push(gap);
+  }
 
-    return {
-      gaps: gaps,
-      allSame: gaps.every(g => Math.abs(g - gaps[0]) < 1),
-      expectedGap: 16  // --spacing-md 的新值
-    };
-  }`
-)
-
-// 檢查多個頁面
-const pages = ["/", "/about", "/contact"];
-for (const page of pages) {
-  browser_navigate(url: `http://localhost:3000${page}`);
-  // ... 檢查佈局
+  return {
+    gaps: gaps,
+    allSame: gaps.every(g => Math.abs(g - gaps[0]) < 1),
+    expectedGap: 16  // --spacing-md 的新值
+  };
 }
+EOF
+
+# 檢查多個頁面
+for page in "/" "/about" "/contact"; do
+  agent-browser navigate "http://localhost:3000$page"
+  agent-browser screenshot
+  # ... 檢查佈局
+done
 ```
 
 **REVIEWER 決策**：
@@ -186,7 +176,7 @@ for (const page of pages) {
 - [ ] 是否修改了 CSS 或 Component？
 - [ ] 是否有對應的設計規格？（ui-specs/*.md）
 - [ ] 啟動 dev server (`npm run dev`)
-- [ ] 使用 Playwright 驗證視覺效果
+- [ ] 使用 agent-browser 驗證視覺效果
 - [ ] 檢查 Design Token 使用
 - [ ] 檢查互動狀態（Hover, Focus）
 - [ ] 檢查是否影響其他頁面
@@ -195,13 +185,13 @@ for (const page of pages) {
 
 ---
 
-## TESTER 使用 Playwright
+## TESTER 使用 Agent-Browser
 
 ### 使用時機
 
-TESTER 在以下情況**必須**使用 Playwright：
+TESTER 在以下情況**必須**使用 agent-browser：
 
-| 測試類型 | Playwright 用途 | 優先級 |
+| 測試類型 | Agent-Browser 用途 | 優先級 |
 |----------|-----------------|--------|
 | **E2E 測試** | 完整流程測試 + UI 驗證 | P0 |
 | **功能測試** | 功能正確性 + UI 狀態驗證 | P0 |
@@ -215,7 +205,7 @@ TESTER 在以下情況**必須**使用 Playwright：
     ↓
 2. 建立測試計畫（功能 + UI）
     ↓
-3. 執行功能測試（Playwright 操作）
+3. 執行功能測試（agent-browser 操作）
     ↓
 4. 執行 UI 驗證（design-validation.md 流程）
     ↓
@@ -232,137 +222,128 @@ TESTER 在以下情況**必須**使用 Playwright：
 **任務**：驗證登入功能實作
 **設計規格**：`openspec/changes/xxx/ui-specs/login-form.md`
 
-```javascript
-// ========== 功能測試 ==========
-console.log("1. 測試登入流程...");
+```bash
+# ========== 功能測試 ==========
+echo "1. 測試登入流程..."
 
-browser_navigate(url: "http://localhost:3000/login")
-browser_snapshot()
+agent-browser navigate http://localhost:3000/login
+agent-browser screenshot
 
-// 1.1 測試成功登入
-browser_type(element: "Email input", ref: "s1e3", text: "user@example.com")
-browser_type(element: "Password input", ref: "s1e4", text: "password123")
-browser_click(element: "Login button", ref: "s1e5")
+# 1.1 測試成功登入
+agent-browser type "Email input" @ref s1e3 "user@example.com"
+agent-browser type "Password input" @ref s1e4 "password123"
+agent-browser click "Login button" @ref s1e5
 
-browser_wait_for(text: "Dashboard")
-browser_snapshot()
-// ✅ 成功導向 /dashboard
+agent-browser wait-for text "Dashboard"
+agent-browser screenshot
+# ✅ 成功導向 /dashboard
 
-// 1.2 測試錯誤登入
-browser_navigate(url: "http://localhost:3000/login")
-browser_type(element: "Email input", ref: "s1e3", text: "wrong@example.com")
-browser_type(element: "Password input", ref: "s1e4", text: "wrong")
-browser_click(element: "Login button", ref: "s1e5")
+# 1.2 測試錯誤登入
+agent-browser navigate http://localhost:3000/login
+agent-browser type "Email input" @ref s1e3 "wrong@example.com"
+agent-browser type "Password input" @ref s1e4 "wrong"
+agent-browser click "Login button" @ref s1e5
 
-browser_wait_for(text: "Invalid credentials")
-// ✅ 顯示錯誤訊息
+agent-browser wait-for text "Invalid credentials"
+# ✅ 顯示錯誤訊息
 
-// ========== UI 驗證 ==========
-console.log("2. 驗證 UI 符合設計規格...");
+# ========== UI 驗證 ==========
+echo "2. 驗證 UI 符合設計規格..."
 
-// 2.1 佈局驗證
-browser_navigate(url: "http://localhost:3000/login")
-browser_snapshot()
+# 2.1 佈局驗證
+agent-browser navigate http://localhost:3000/login
+agent-browser screenshot
 
-browser_evaluate(
-  element: "login container",
-  ref: "s1e1",
-  function: `(element) => {
-    const style = window.getComputedStyle(element);
-    return {
-      maxWidth: style.maxWidth,
-      padding: style.padding
-    };
-  }`
-)
-// ✅ { maxWidth: "400px", padding: "32px" }
-
-// 2.2 視覺驗證
-browser_evaluate(
-  element: "Login heading",
-  ref: "s1e2",
-  function: `(element) => {
-    const style = window.getComputedStyle(element);
-    const root = window.getComputedStyle(document.documentElement);
-
-    return {
-      fontSize: style.fontSize,
-      expectedSize: root.getPropertyValue('--text-2xl').trim(),
-      fontWeight: style.fontWeight,
-      expectedWeight: root.getPropertyValue('--font-semibold').trim(),
-      sizeCorrect: style.fontSize === root.getPropertyValue('--text-2xl').trim(),
-      weightCorrect: style.fontWeight === root.getPropertyValue('--font-semibold').trim()
-    };
-  }`
-)
-// ✅ { sizeCorrect: true, weightCorrect: true }
-
-// 2.3 狀態驗證 - Loading
-browser_navigate(url: "http://localhost:3000/login")
-browser_type(element: "Email input", ref: "s1e3", text: "user@example.com")
-browser_type(element: "Password input", ref: "s1e4", text: "password123")
-browser_click(element: "Login button", ref: "s1e5")
-
-browser_snapshot()
-// 應該看到：
-// - spinner [ref=s2e1]
-// - button "Logging in..." [disabled, aria-busy=true]
-
-// ✅ Loading 狀態正確
-
-// 2.4 狀態驗證 - Error
-browser_navigate(url: "http://localhost:3000/login")
-browser_type(element: "Email input", ref: "s1e3", text: "invalid")
-browser_click(element: "Login button", ref: "s1e5")
-
-browser_wait_for(text: "Invalid email format")
-browser_snapshot()
-// 應該看到：
-// - textbox "Email" [aria-invalid=true, ref=s2e3]
-// - text "Invalid email format" [role=alert]
-
-browser_evaluate(
-  element: "Email input",
-  ref: "s2e3",
-  function: `(element) => {
-    const style = window.getComputedStyle(element);
-    return {
-      borderColor: style.borderColor,
-      ariaInvalid: element.getAttribute('aria-invalid')
-    };
-  }`
-)
-// ✅ { ariaInvalid: "true" }
-
-// 2.5 響應式驗證
-browser_resize(width: 375, height: 667)
-browser_snapshot()
-
-browser_evaluate(
-  element: "login container",
-  ref: "s1e1",
-  function: `(element) => {
-    return {
-      width: element.clientWidth,
-      padding: window.getComputedStyle(element).padding
-    };
-  }`
-)
-// ✅ Mobile padding 調整正確
-
-// ========== 回歸測試 ==========
-console.log("3. 回歸測試...");
-
-// 檢查其他頁面是否被影響
-const pages = ["/", "/about", "/contact"];
-for (const page of pages) {
-  browser_navigate(url: `http://localhost:3000${page}`);
-  browser_snapshot();
-
-  // 檢查是否有 console error
-  browser_console_messages(level: "error");
-  // ✅ 無錯誤
+agent-browser evaluate "login container" @ref s1e1 << 'EOF'
+(element) => {
+  const style = window.getComputedStyle(element);
+  return {
+    maxWidth: style.maxWidth,
+    padding: style.padding
+  };
 }
+EOF
+# ✅ { maxWidth: "400px", padding: "32px" }
+
+# 2.2 視覺驗證
+agent-browser evaluate "Login heading" @ref s1e2 << 'EOF'
+(element) => {
+  const style = window.getComputedStyle(element);
+  const root = window.getComputedStyle(document.documentElement);
+
+  return {
+    fontSize: style.fontSize,
+    expectedSize: root.getPropertyValue('--text-2xl').trim(),
+    fontWeight: style.fontWeight,
+    expectedWeight: root.getPropertyValue('--font-semibold').trim(),
+    sizeCorrect: style.fontSize === root.getPropertyValue('--text-2xl').trim(),
+    weightCorrect: style.fontWeight === root.getPropertyValue('--font-semibold').trim()
+  };
+}
+EOF
+# ✅ { sizeCorrect: true, weightCorrect: true }
+
+# 2.3 狀態驗證 - Loading
+agent-browser navigate http://localhost:3000/login
+agent-browser type "Email input" @ref s1e3 "user@example.com"
+agent-browser type "Password input" @ref s1e4 "password123"
+agent-browser click "Login button" @ref s1e5
+
+agent-browser screenshot
+# 應該看到：
+# - spinner [ref=s2e1]
+# - button "Logging in..." [disabled, aria-busy=true]
+
+# ✅ Loading 狀態正確
+
+# 2.4 狀態驗證 - Error
+agent-browser navigate http://localhost:3000/login
+agent-browser type "Email input" @ref s1e3 "invalid"
+agent-browser click "Login button" @ref s1e5
+
+agent-browser wait-for text "Invalid email format"
+agent-browser screenshot
+# 應該看到：
+# - textbox "Email" [aria-invalid=true, ref=s2e3]
+# - text "Invalid email format" [role=alert]
+
+agent-browser evaluate "Email input" @ref s2e3 << 'EOF'
+(element) => {
+  const style = window.getComputedStyle(element);
+  return {
+    borderColor: style.borderColor,
+    ariaInvalid: element.getAttribute('aria-invalid')
+  };
+}
+EOF
+# ✅ { ariaInvalid: "true" }
+
+# 2.5 響應式驗證
+agent-browser viewport 375 667
+agent-browser screenshot
+
+agent-browser evaluate "login container" @ref s1e1 << 'EOF'
+(element) => {
+  return {
+    width: element.clientWidth,
+    padding: window.getComputedStyle(element).padding
+  };
+}
+EOF
+# ✅ Mobile padding 調整正確
+
+# ========== 回歸測試 ==========
+echo "3. 回歸測試..."
+
+# 檢查其他頁面是否被影響
+for page in "/" "/about" "/contact"; do
+  agent-browser navigate "http://localhost:3000$page"
+  agent-browser screenshot
+
+  # 檢查是否有 console error
+  agent-browser console-logs error
+  # ✅ 無錯誤
+done
 ```
 
 **TESTER 測試報告**：
@@ -485,11 +466,11 @@ for (const page of pages) {
 
 ## 強制規則
 
-### 1. UI 變更必須用 Playwright 驗證
+### 1. UI 變更必須用 agent-browser 驗證
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│  變更 CSS/Component = 必須 Playwright 驗證                 │
+│  變更 CSS/Component = 必須 agent-browser 驗證             │
 │  沒有例外！                                                │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -580,7 +561,7 @@ screenshots/
 
 ## 工作流整合範例
 
-完整的 D→R→T 流程，包含 Playwright 驗證：
+完整的 D→R→T 流程，包含 agent-browser 驗證：
 
 ```
 ========== DEVELOPER ==========
@@ -603,14 +584,14 @@ git diff
 # 3. 讀取設計規格
 Read: openspec/changes/xxx/ui-specs/login-form.md
 
-# 4. 使用 Playwright 快速驗證
-browser_navigate(...)
-browser_snapshot()
-browser_evaluate(...)
+# 4. 使用 agent-browser 快速驗證
+agent-browser navigate ...
+agent-browser screenshot
+agent-browser evaluate ...
 # 發現：Button hover 狀態缺失
 
 # 5. 截圖 + REJECT
-browser_take_screenshot(filename: "review/button-hover-issue.png")
+agent-browser screenshot -e "Primary button" @ref s1e5 -o review/button-hover-issue.png
 
 決定：REJECT
 原因：Button hover 狀態不符合設計規格
@@ -637,17 +618,17 @@ Read: openspec/changes/xxx/ui-specs/login-form.md
 Read: ~/.claude/skills/ui/references/tokens.md
 
 # 2. 執行功能測試 + UI 驗證
-browser_navigate(...)
-browser_snapshot()
+agent-browser navigate ...
+agent-browser screenshot
 
 # 功能測試
-browser_type(...)
-browser_click(...)
-browser_wait_for(...)
+agent-browser type ...
+agent-browser click ...
+agent-browser wait-for ...
 # ✅ 登入功能正常
 
 # UI 驗證（design-validation.md 流程）
-browser_evaluate(...)
+agent-browser evaluate ...
 # ✅ 佈局正確
 # ✅ 視覺符合規格
 # ✅ 狀態正確
@@ -665,20 +646,20 @@ browser_evaluate(...)
 
 ## Session 結束檢查
 
-每次 session 結束時，確認 Playwright 使用：
+每次 session 結束時，確認 agent-browser 使用：
 
 ```
-📋 Playwright 使用報告
+📋 Agent-Browser 使用報告
 
 【REVIEWER】
 - UI 變更任務：X 個
-- 使用 Playwright 驗證：X 個
+- 使用 agent-browser 驗證：X 個
 - 未驗證的 UI 變更：0 個 ✅
 
 【TESTER】
 - 測試任務：X 個
 - UI 相關任務：X 個
-- 使用 Playwright 驗證：X 個
+- 使用 agent-browser 驗證：X 個
 - 未驗證的 UI 任務：0 個 ✅
 
 【截圖存證】
@@ -691,7 +672,7 @@ browser_evaluate(...)
 
 ## 總結
 
-**Playwright 在工作流中的角色**：
+**Agent-Browser 在工作流中的角色**：
 
 | Agent | 使用時機 | 目的 |
 |-------|----------|------|
@@ -700,7 +681,7 @@ browser_evaluate(...)
 | **DEBUGGER** | 修復 UI Bug | 比對修復前後 |
 
 **記住三個強制規則**：
-1. UI 變更 = 必須 Playwright 驗證
+1. UI 變更 = 必須 agent-browser 驗證
 2. 有設計規格 = 必須對照驗證
 3. 發現問題 = 必須截圖存證
 
