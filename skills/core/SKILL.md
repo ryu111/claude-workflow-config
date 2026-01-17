@@ -85,3 +85,14 @@ T = Task(subagent_type: "tester")     → 測試程式碼
 | 禁止硬編碼指南 | `references/no-hardcoding.md` |
 | 回歸測試要求 | `references/regression.md` |
 | 狀態顯示格式 | `references/status-display.md` |
+| **發現即修復** | `references/fix-on-discovery.md` |
+
+## Hook 強制機制
+
+以下規則有 Hook 自動提醒：
+
+| 規則 | Hook | 觸發時機 |
+|------|------|----------|
+| 發現即修復 | `fix-on-discovery.sh` | Bash (pyright/eslint/等) |
+| D→R→T 工作流 | `remind-review.sh` | Edit/Write |
+| 回歸測試 | 由 TESTER agent 強制 | 測試階段 |

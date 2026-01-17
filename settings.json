@@ -95,6 +95,11 @@
             "type": "command",
             "command": "/Users/sbu/.claude/hooks/workflow/check-core-skill.sh",
             "timeout": 2
+          },
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/workflow/delegation-logger.sh",
+            "timeout": 1
           }
         ]
       }
@@ -194,6 +199,18 @@
           {
             "type": "command",
             "command": "/Users/sbu/.claude/hooks/workflow/tech-debt-reminder.sh",
+            "timeout": 2
+          }
+        ]
+      },
+      {
+        "matchers": [
+          "Bash"
+        ],
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/sbu/.claude/hooks/core/fix-on-discovery.sh",
             "timeout": 2
           }
         ]
