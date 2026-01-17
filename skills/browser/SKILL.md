@@ -16,24 +16,40 @@ agent-browser install  # 下載 Chromium
 
 ## Quick Reference
 
-### 命令列表
+### 基本命令
 
-| 命令 | 用途 | Playwright MCP 對應 |
-|------|------|---------------------|
-| `open URL` | 導航到 URL | browser_navigate |
-| `snapshot -i` | 取得互動元素（含 @ref） | browser_snapshot |
-| `click @ref` | 點擊元素 | browser_click |
-| `type @ref "text"` | 輸入文字（追加） | browser_type |
-| `fill @ref "text"` | 填寫欄位（清除後輸入） | browser_fill_form |
-| `hover @ref` | 滑鼠懸停 | browser_hover |
-| `select @ref "value"` | 選擇下拉選項 | browser_select_option |
-| `press Key` | 按鍵盤按鍵 | browser_press_key |
-| `eval "js"` | 執行 JavaScript | browser_evaluate |
-| `screenshot file.png` | 截圖存檔 | browser_take_screenshot |
-| `set viewport W H` | 調整視窗大小 | browser_resize |
-| `wait "text"` | 等待文字出現 | browser_wait_for |
-| `back` / `forward` | 上一頁/下一頁 | browser_navigate_back |
-| `close` | 關閉瀏覽器 | browser_close |
+| 命令 | 用途 |
+|------|------|
+| `open URL` | 導航到 URL |
+| `snapshot -i` | 取得互動元素（含 @ref） |
+| `click @ref` | 點擊元素 |
+| `fill @ref "text"` | 填寫欄位 |
+| `hover @ref` | 滑鼠懸停 |
+| `select @ref "value"` | 選擇下拉選項 |
+| `press Key` | 按鍵盤按鍵 |
+| `eval "js"` | 執行 JavaScript |
+| `screenshot file.png` | 截圖存檔 |
+| `set viewport W H` | 調整視窗大小 |
+| `wait "text"` | 等待文字出現 |
+| `close` | 關閉瀏覽器 |
+
+### 進階命令
+
+| 命令 | 用途 |
+|------|------|
+| `network route <url>` | 攔截/阻擋/模擬請求 |
+| `cookies` / `storage local` | 管理 Cookies / Storage |
+| `dialog accept/dismiss` | 處理對話框 |
+| `set device "iPhone 14"` | 裝置模擬 |
+| `set media dark/light` | 深色/淺色模式 |
+| `set geo <lat> <lng>` | 地理位置 |
+| `set offline on/off` | 離線模式 |
+| `tab new/close` | 多分頁管理 |
+| `frame <selector>` | 切換 iframe |
+| `trace start/stop` | 效能追蹤 |
+| `upload @ref <file>` | 檔案上傳 |
+| `console` / `errors` | 除錯訊息 |
+| `state save/load` | 儲存/載入狀態 |
 
 ### 進階資源
 

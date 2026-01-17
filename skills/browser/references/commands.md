@@ -439,6 +439,458 @@ agent-browser --headers '{"Authorization": "Bearer token"}' open https://api.com
 AGENT_BROWSER_HEADERS='{"X-Custom": "value"}' agent-browser open https://example.com
 ```
 
+### route / unroute
+
+攔截、阻擋或模擬 HTTP 請求。
+
+```bash
+agent-browser network route <url-pattern>           # 攔截匹配的請求
+agent-browser network route <url> --abort           # 阻擋請求
+agent-browser network route <url> --body <json>     # 模擬回應
+agent-browser network unroute [url]                 # 移除攔截規則
+```
+
+```bash
+# 攔截 API 請求
+agent-browser network route "**/api/**"
+
+# 阻擋廣告追蹤
+agent-browser network route "**/analytics/**" --abort
+
+# 模擬 API 回應
+agent-browser network route "**/api/user" --body '{"name": "Test User"}'
+
+# 移除所有攔截規則
+agent-browser network unroute
+```
+
+### requests
+
+查看攔截的請求。
+
+```bash
+agent-browser network requests
+```
+
+---
+
+## Storage 管理
+
+### cookies
+
+管理瀏覽器 Cookies。
+
+```bash
+agent-browser cookies                     # 取得所有 cookies
+agent-browser cookies set <name> <value>  # 設定 cookie
+agent-browser cookies clear               # 清除所有 cookies
+```
+
+```bash
+# 查看所有 cookies
+agent-browser cookies
+
+# 設定認證 token
+agent-browser cookies set auth_token "abc123"
+
+# 清除 cookies（登出）
+agent-browser cookies clear
+```
+
+### storage local / session
+
+管理 localStorage 和 sessionStorage。
+
+```bash
+# localStorage
+agent-browser storage local              # 取得所有值
+agent-browser storage local <key>        # 取得特定 key
+agent-browser storage local set <k> <v>  # 設定值
+agent-browser storage local clear        # 清除
+
+# sessionStorage
+agent-browser storage session            # 取得所有值
+agent-browser storage session <key>      # 取得特定 key
+agent-browser storage session set <k> <v>  # 設定值
+agent-browser storage session clear      # 清除
+```
+
+```bash
+# 查看 localStorage
+agent-browser storage local
+
+# 取得特定值
+agent-browser storage local "user_preferences"
+
+# 設定暗色模式偏好
+agent-browser storage local set "theme" "dark"
+
+# 清除 sessionStorage
+agent-browser storage session clear
+```
+
+---
+
+## Dialog 處理
+
+### dialog accept / dismiss
+
+處理瀏覽器對話框（alert、confirm、prompt）。
+
+```bash
+agent-browser dialog accept [text]    # 接受對話框（可輸入文字）
+agent-browser dialog dismiss          # 取消/關閉對話框
+```
+
+```bash
+# 接受 alert
+agent-browser dialog accept
+
+# 接受 prompt 並輸入文字
+agent-browser dialog accept "My input"
+
+# 取消 confirm
+agent-browser dialog dismiss
+```
+
+---
+
+## 裝置模擬
+
+### set device
+
+模擬特定裝置。
+
+```bash
+agent-browser set device <device-name>
+```
+
+常用裝置：
+- `"iPhone 14"`
+- `"iPhone 14 Pro Max"`
+- `"iPad Pro"`
+- `"Pixel 7"`
+- `"Galaxy S21"`
+
+```bash
+# 模擬 iPhone
+agent-browser set device "iPhone 14"
+agent-browser snapshot -i
+
+# 模擬 Android
+agent-browser set device "Pixel 7"
+```
+
+### set media
+
+設定色彩偏好（深色/淺色模式）。
+
+```bash
+agent-browser set media dark     # 深色模式
+agent-browser set media light    # 淺色模式
+```
+
+```bash
+# 測試深色模式
+agent-browser set media dark
+agent-browser screenshot dark-mode.png
+
+# 測試淺色模式
+agent-browser set media light
+agent-browser screenshot light-mode.png
+```
+
+### set geo
+
+設定地理位置。
+
+```bash
+agent-browser set geo <latitude> <longitude>
+```
+
+```bash
+# 設定位置為台北
+agent-browser set geo 25.0330 121.5654
+
+# 設定位置為東京
+agent-browser set geo 35.6762 139.6503
+```
+
+### set offline
+
+模擬離線狀態。
+
+```bash
+agent-browser set offline on     # 啟用離線模式
+agent-browser set offline off    # 關閉離線模式
+```
+
+```bash
+# 測試離線狀態
+agent-browser set offline on
+agent-browser reload
+agent-browser snapshot -i  # 查看離線狀態 UI
+
+agent-browser set offline off
+```
+
+---
+
+## 多分頁管理
+
+### tab
+
+管理瀏覽器分頁。
+
+```bash
+agent-browser tab                # 列出所有分頁
+agent-browser tab new [url]      # 開新分頁
+agent-browser tab <n>            # 切換到第 n 個分頁
+agent-browser tab close [n]      # 關閉分頁
+```
+
+```bash
+# 列出所有分頁
+agent-browser tab
+
+# 開新分頁並導航
+agent-browser tab new https://example.com
+
+# 切換到第 2 個分頁
+agent-browser tab 2
+
+# 關閉當前分頁
+agent-browser tab close
+
+# 關閉第 3 個分頁
+agent-browser tab close 3
+```
+
+### window new
+
+開新視窗。
+
+```bash
+agent-browser window new
+```
+
+---
+
+## Frame 處理
+
+### frame
+
+切換到 iframe 內執行操作。
+
+```bash
+agent-browser frame <selector>   # 切換到指定 iframe
+agent-browser frame main         # 返回主文件
+```
+
+```bash
+# 切換到 iframe
+agent-browser frame "#payment-iframe"
+agent-browser snapshot -i  # 查看 iframe 內的元素
+
+# 在 iframe 內操作
+agent-browser fill @e1 "4242424242424242"
+
+# 返回主文件
+agent-browser frame main
+```
+
+---
+
+## Trace 記錄
+
+### trace start / stop
+
+記錄效能追蹤資料（用於除錯和分析）。
+
+```bash
+agent-browser trace start [path]    # 開始記錄
+agent-browser trace stop [path]     # 停止並儲存
+```
+
+```bash
+# 開始記錄
+agent-browser trace start trace.zip
+
+# 執行操作...
+agent-browser click @e1
+agent-browser wait "Success"
+
+# 停止並儲存
+agent-browser trace stop trace.zip
+
+# 可用 Playwright Trace Viewer 開啟分析
+```
+
+---
+
+## 檔案操作
+
+### upload
+
+上傳檔案到 file input。
+
+```bash
+agent-browser upload <selector> <file-path>
+```
+
+```bash
+# 上傳單一檔案
+agent-browser upload @e1 "/path/to/file.pdf"
+
+# 上傳多個檔案
+agent-browser upload "#file-input" "/path/to/image1.png,/path/to/image2.png"
+```
+
+---
+
+## Console 與除錯
+
+### console
+
+取得瀏覽器 console 訊息。
+
+```bash
+agent-browser console            # 顯示 console 訊息
+agent-browser console --clear    # 清除 console
+```
+
+```bash
+# 查看 console 訊息
+agent-browser console
+
+# 清除後重新監聽
+agent-browser console --clear
+agent-browser click @e1
+agent-browser console  # 查看點擊後的訊息
+```
+
+### errors
+
+取得頁面錯誤。
+
+```bash
+agent-browser errors             # 顯示頁面錯誤
+agent-browser errors --clear     # 清除錯誤記錄
+```
+
+```bash
+# 查看頁面錯誤
+agent-browser errors
+
+# 清除錯誤記錄
+agent-browser errors --clear
+```
+
+### highlight
+
+高亮標記元素（除錯用）。
+
+```bash
+agent-browser highlight <selector>
+```
+
+```bash
+# 高亮按鈕
+agent-browser highlight ".submit-btn"
+
+# 高亮表單區域
+agent-browser highlight "#login-form"
+```
+
+---
+
+## 認證與狀態
+
+### set credentials
+
+設定 HTTP 基本認證。
+
+```bash
+agent-browser set credentials <username> <password>
+```
+
+```bash
+# 設定認證
+agent-browser set credentials admin secret123
+agent-browser open https://protected-site.com
+```
+
+### state save / load
+
+儲存/載入瀏覽器狀態（包含 cookies、localStorage 等）。
+
+```bash
+agent-browser state save <path>    # 儲存狀態
+agent-browser state load <path>    # 載入狀態
+```
+
+```bash
+# 登入後儲存狀態
+agent-browser open https://app.com/login
+agent-browser fill @e1 "user@test.com"
+agent-browser fill @e2 "password"
+agent-browser click @e3
+agent-browser wait "Dashboard"
+agent-browser state save auth-state.json
+
+# 下次直接載入狀態（跳過登入）
+agent-browser state load auth-state.json
+agent-browser open https://app.com/dashboard
+```
+
+---
+
+## 進階滑鼠操作
+
+### mouse
+
+精細滑鼠控制。
+
+```bash
+agent-browser mouse move <x> <y>    # 移動滑鼠
+agent-browser mouse down            # 按下滑鼠
+agent-browser mouse up              # 放開滑鼠
+agent-browser mouse wheel <delta>   # 滾輪
+```
+
+```bash
+# 拖曳操作（手動控制）
+agent-browser mouse move 100 200
+agent-browser mouse down
+agent-browser mouse move 300 200
+agent-browser mouse up
+
+# 滾輪操作
+agent-browser mouse wheel 500  # 向下滾動
+```
+
+---
+
+## 進階鍵盤操作
+
+### keydown / keyup
+
+持續按住/放開按鍵（用於組合鍵）。
+
+```bash
+agent-browser keydown <key>    # 按住按鍵
+agent-browser keyup <key>      # 放開按鍵
+```
+
+```bash
+# Shift + Click（多選）
+agent-browser keydown Shift
+agent-browser click @e1
+agent-browser click @e2
+agent-browser click @e3
+agent-browser keyup Shift
+```
+
 ---
 
 ## 關閉
