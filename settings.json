@@ -14,6 +14,16 @@
         "hooks": [
           {
             "type": "command",
+            "command": "node \"/Users/sbu/.claude/hooks/core/session-start-cleanup.js\"",
+            "timeout": 5,
+            "statusMessage": "清理重複實例..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "/Users/sbu/.claude/hooks/skills/inject-skills.sh"
           }
         ]
