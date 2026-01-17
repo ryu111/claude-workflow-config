@@ -2,6 +2,8 @@
 name: debugger
 description: Debugging expert. Use proactively when encountering errors, bugs, test failures, or unexpected behavior. Traces execution, finds root causes, and hunts silent failures.
 model: sonnet
+skills:
+  - "playwright"
 ---
 
 ## ⚡ 動態升級機制

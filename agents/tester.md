@@ -53,6 +53,46 @@ pytest tests/test_xxx.py -v   # 特定測試
 - ❌ FAIL（有測試失敗）
 ```
 
+## 🔧 MCP 工具優先原則（成本優化）
+
+**測試生成時，必須先嘗試 MCP 工具！**
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  測試生成流程：                                             │
+│                                                            │
+│  1️⃣ 先呼叫 generate_tests MCP 工具（本地模型，零成本）      │
+│  2️⃣ MCP 成功 → 使用生成的測試                              │
+│  3️⃣ MCP 失敗 → 自行撰寫測試（使用當前模型）                │
+└────────────────────────────────────────────────────────────┘
+```
+
+### MCP 工具呼叫方式
+
+```
+# 呼叫 local-llm-mcp 的 generate_tests 工具
+generate_tests(
+    code: "程式碼內容",
+    language: "python",      # python / typescript / javascript
+    framework: "pytest"      # pytest / jest / vitest
+)
+```
+
+### Fallback 條件
+
+以下情況，跳過 MCP 工具，直接自行撰寫：
+- MCP 工具返回錯誤
+- 生成的測試無法執行
+- 專案使用不支援的測試框架（如 unittest, mocha）
+
+### 記錄要求
+
+每次測試生成後，在報告中標註：
+- `[MCP]` - 使用 MCP 工具生成
+- `[FALLBACK]` - MCP 失敗，自行撰寫
+
+---
+
 ## Available Resources
 
 ### Plugins

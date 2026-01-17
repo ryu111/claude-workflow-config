@@ -142,6 +142,29 @@ Task(subagent_type: "tester", prompt: "執行測試...")
 | 2 | 比較錯誤是否相同 | 相同 → 升級；不同 → 可能 flaky |
 | 3 | 判斷是否架構問題 | 相同 → 通知 ARCHITECT；不同 → 暫停 |
 
+## Agent 工作標示
+
+**重要**：切換 agent 時，Main Agent 必須輸出標示讓用戶知道當前狀態。
+
+格式：
+```
+🏗️ ARCHITECT: [任務描述]
+🎨 DESIGNER: [任務描述]
+💻 DEVELOPER: [任務描述]
+🔍 REVIEWER: [任務描述]
+🧪 TESTER: [任務描述]
+🐛 DEBUGGER: [任務描述]
+```
+
+範例：
+```
+🏗️ ARCHITECT: 規劃登入功能架構
+💻 DEVELOPER: 實作 Task 2.1 - 建立 AuthService
+🔍 REVIEWER: 審查 AuthService 程式碼
+🧪 TESTER: 執行 AuthService 單元測試
+✅ Task 2.1 完成，更新 tasks.md
+```
+
 ## 工作流結束流程
 
 ```

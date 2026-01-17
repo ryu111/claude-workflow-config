@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# SubagentStart Hook: Inject skills into subagent context
-# Supports both project-level and global skills
+# SessionStart Hook: Inject PROJECT-LEVEL skills only
+# Global skills are handled by Claude Code's built-in system + agent skills: field
 #
-# Priority: Project skills override global skills with same name
+# Only loads SKILL.md files (not references/)
+# References are loaded on-demand via Progressive Disclosure pattern
 #
 # Safeguards:
 # - MAX_SKILLS: 10 (prevent context overflow)
@@ -12,9 +13,8 @@
 
 set -euo pipefail
 
-# Directories to scan (project first, then global)
+# Only scan project-level skills (global handled by Claude Code)
 PROJECT_SKILLS_DIR=".claude/skills"
-GLOBAL_SKILLS_DIR="$HOME/.claude/skills"
 
 MAX_SKILLS=10
 MAX_SKILL_SIZE=10240      # 10KB per file
@@ -37,14 +37,15 @@ get_skill_name() {
   fi
 }
 
-# Function to add skill files (skip duplicates by name)
+# Function to add SKILL.md files only (not references/)
 add_skills_from_dir() {
   local dir="$1"
   if [[ -d "$dir" ]]; then
-    local files=$(find "$dir" -name "*.md" -type f 2>/dev/null || true)
+    # Only find SKILL.md files, max 2 levels deep (skills/name/SKILL.md)
+    local files=$(find "$dir" -maxdepth 2 -name "SKILL.md" -type f 2>/dev/null || true)
     for file in $files; do
       local name=$(get_skill_name "$file")
-      # Skip if already loaded (project overrides global)
+      # Skip if already loaded
       if [[ ! "$LOADED_NAMES" =~ ":${name}:" ]]; then
         SKILL_FILES+="$file"$'\n'
         LOADED_NAMES+=":${name}:"
@@ -53,10 +54,8 @@ add_skills_from_dir() {
   fi
 }
 
-# Project skills first (higher priority)
+# Only load project-level skills (global skills handled by Claude Code built-in)
 add_skills_from_dir "$PROJECT_SKILLS_DIR"
-# Global skills second
-add_skills_from_dir "$GLOBAL_SKILLS_DIR"
 
 # Limit to MAX_SKILLS
 SKILL_FILES=$(echo "$SKILL_FILES" | head -n "$MAX_SKILLS")
@@ -102,7 +101,7 @@ $skill_body
 done <<< "$SKILL_FILES"
 
 # Build status message
-STATUS_MSG="📚 Skills Loaded: $LOADED_COUNT"
+STATUS_MSG="📦 Project Skills: $LOADED_COUNT"
 
 if [[ -n "$SKIPPED_FILES" ]]; then
   STATUS_MSG+="\n⚠️  Skipped (size limits):\n$SKIPPED_FILES"

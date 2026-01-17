@@ -87,6 +87,8 @@ description: 功能描述 + 何時觸發此 skill（觸發機制！）
 
 ## Progressive Disclosure（漸進式揭露）
 
+<!-- 以下範例中的 references/ 路徑為教學示範，非實際檔案引用 -->
+
 ### 三層載入系統
 
 | 層級 | 內容 | Token | 何時載入 |

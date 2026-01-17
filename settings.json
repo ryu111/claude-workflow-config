@@ -2,7 +2,15 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/hooks/core/session-start.js\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
         "hooks": [
           {
             "type": "command",
@@ -14,8 +22,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"/Users/sbu/.claude/hooks/core/session-start.js\"",
-            "timeout": 10
+            "command": "/Users/sbu/.claude/hooks/llm/check-llm-service.sh",
+            "timeout": 10,
+            "statusMessage": "啟動 LLM Service..."
           }
         ]
       }
@@ -60,7 +69,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "mcp__",
+        "matchers": ["mcp__"],
         "hooks": [
           {
             "type": "command",
