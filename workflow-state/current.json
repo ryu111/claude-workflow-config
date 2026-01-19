@@ -1,0 +1,42 @@
+{
+  "version": "2.0",
+  "state": "REVIEW",
+  "previousState": "IDLE",
+  "task": {
+    "current": null,
+    "total": 0,
+    "completed": 0
+  },
+  "changeId": null,
+  "projectPath": null,
+  "timestamps": {
+    "workflowStarted": "2026-01-19T04:30:51.399Z",
+    "stateChanged": "2026-01-19T04:30:51.398Z",
+    "lastActivity": "2026-01-19T04:30:51.401Z"
+  },
+  "loop": {
+    "active": false,
+    "id": null,
+    "iteration": 0,
+    "maxIterations": 10
+  },
+  "retries": {
+    "develop": 0,
+    "debug": 0
+  },
+  "processes": [],
+  "bypass": [],
+  "mainAgentOps": {
+    "directEdits": 0,
+    "delegated": 1,
+    "blocked": 1,
+    "bypassed": 0
+  },
+  "taskSync": {
+    "lastSyncAt": null,
+    "tasksFile": null,
+    "totalTasks": 0,
+    "completed": 0,
+    "inProgress": 0
+  }
+}

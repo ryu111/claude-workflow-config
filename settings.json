@@ -118,6 +118,16 @@
         ]
       },
       {
+        "matchers": ["Edit", "Write", "Task"],
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/hooks/workflow/workflow-gate.js\"",
+            "timeout": 3
+          }
+        ]
+      },
+      {
         "matchers": ["Task"],
         "hooks": [
           {
@@ -193,6 +203,32 @@
             "type": "command",
             "command": "node \"/Users/sbu/.claude/hooks/core/auto-capture-hook.js\"",
             "timeout": 5
+          }
+        ]
+      },
+      {
+        "matchers": [
+          "Edit",
+          "Write",
+          "Task"
+        ],
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/hooks/workflow/state-updater.js\"",
+            "timeout": 3
+          }
+        ]
+      },
+      {
+        "matchers": [
+          "Task"
+        ],
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/hooks/workflow/task-sync.js\"",
+            "timeout": 3
           }
         ]
       },
