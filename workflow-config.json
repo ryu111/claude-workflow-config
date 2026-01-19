@@ -33,7 +33,7 @@
     "includeDelegationStats": true
   },
   "mainAgentLimits": {
-    "enabled": true,
+    "enabled": false,
     "whitelist": ["*.md", "*.json", "*.yaml", "*.yml", ".env*", "openspec/**"],
     "blacklist": ["*.ts", "*.tsx", "*.js", "*.jsx", "*.py", "*.go", "*.rs", "*.java", "*.sh", "*.sql", "*.vue", "*.svelte"],
     "testMode": false,

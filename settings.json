@@ -227,6 +227,11 @@
         "hooks": [
           {
             "type": "command",
+            "command": "node \"/Users/sbu/.claude/hooks/workflow/status-display.js\"",
+            "timeout": 2
+          },
+          {
+            "type": "command",
             "command": "node \"/Users/sbu/.claude/hooks/workflow/task-sync.js\"",
             "timeout": 3
           }

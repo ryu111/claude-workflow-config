@@ -1,26 +1,10 @@
 {
-  "version": "2.0",
-  "changeId": "test-change-001",
-  "state": "REVIEW",
-  "previousState": "DEVELOP",
-  "mainAgentOps": {
-    "directCode": 0,
-    "bypassed": 1,
-    "delegated": 42,
-    "directEdits": 33
-  },
-  "timestamps": {
-    "created": "2026-01-19T10:00:00Z",
-    "lastActivity": "2026-01-19T07:58:28.977Z",
-    "stateChanged": "2026-01-19T07:58:28.974Z",
-    "workflowStarted": "2026-01-19T05:34:13.217Z"
-  },
-  "metadata": {
-    "lastBypass": {
+  "records": [
+    {
       "state": "TEST",
       "skippedState": "TEST",
       "reason": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "timestamp": "2026-01-19T05:32:24.412Z"
     }
-  }
+  ]
 }
