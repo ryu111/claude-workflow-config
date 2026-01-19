@@ -270,6 +270,24 @@
             "timeout": 2
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/hooks/workflow/completion-enforcer.js\"",
+            "timeout": 3
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/hooks/workflow/session-report.js\"",
+            "timeout": 3
+          }
+        ]
       }
     ]
   },

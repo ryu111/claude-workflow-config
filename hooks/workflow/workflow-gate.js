@@ -34,36 +34,68 @@ const CODE_EXTENSIONS = [
   '.vue', '.svelte'
 ];
 
+// 狀態常數
+const STATES = {
+  IDLE: 'IDLE',
+  PLANNING: 'PLANNING',
+  DESIGN: 'DESIGN',
+  MIGRATION_PLANNING: 'MIGRATION_PLANNING',
+  DEVELOP: 'DEVELOP',
+  SKILL_CREATE: 'SKILL_CREATE',
+  REVIEW: 'REVIEW',
+  TEST: 'TEST',
+  VALIDATE: 'VALIDATE',
+  DEBUG: 'DEBUG',
+  COMPLETING: 'COMPLETING',
+  LOOP_PAUSED: 'LOOP_PAUSED',
+  LOOP_COMPLETING: 'LOOP_COMPLETING',
+  PAUSED: 'PAUSED',
+  BLOCKED: 'BLOCKED',
+  DONE: 'DONE'
+};
+
+// Agent 類型常數
+const AGENT_TYPES = {
+  ARCHITECT: 'architect',
+  DESIGNER: 'designer',
+  MIGRATION: 'migration',
+  DEVELOPER: 'developer',
+  SKILLS_AGENTS: 'skills-agents',
+  REVIEWER: 'reviewer',
+  TESTER: 'tester',
+  DEBUGGER: 'debugger'
+};
+
 // 允許的狀態轉換
 const VALID_TRANSITIONS = {
-  'IDLE': ['PLANNING', 'DEVELOP', 'SKILL_CREATE'],
-  'PLANNING': ['DESIGN', 'MIGRATION_PLANNING', 'DEVELOP', 'SKILL_CREATE', 'IDLE'],
-  'DESIGN': ['DEVELOP', 'IDLE'],
-  'MIGRATION_PLANNING': ['DEVELOP', 'IDLE'],
-  'DEVELOP': ['REVIEW'],  // 強制必須經過 REVIEW
-  'SKILL_CREATE': ['VALIDATE'],
-  'REVIEW': ['TEST', 'DEVELOP'],  // APPROVE → TEST, REJECT → DEVELOP
-  'TEST': ['COMPLETING', 'DEBUG', 'DEVELOP'],  // PASS → COMPLETING, FAIL → DEBUG/DEVELOP
-  'VALIDATE': ['COMPLETING', 'SKILL_CREATE'],
-  'DEBUG': ['DEVELOP', 'BLOCKED'],
-  'COMPLETING': ['DONE', 'IDLE'],
-  'LOOP_PAUSED': ['DEVELOP', 'REVIEW', 'TEST', 'DEBUG'],  // 可恢復到之前狀態
-  'LOOP_COMPLETING': ['COMPLETING'],
-  'PAUSED': ['IDLE', 'DEVELOP', 'REVIEW', 'TEST'],
-  'BLOCKED': ['IDLE'],  // 只能重新開始
-  'DONE': ['IDLE']
+  [STATES.IDLE]: [STATES.PLANNING, STATES.DEVELOP, STATES.SKILL_CREATE, STATES.DESIGN, STATES.MIGRATION_PLANNING],
+  [STATES.PLANNING]: [STATES.DESIGN, STATES.MIGRATION_PLANNING, STATES.DEVELOP, STATES.SKILL_CREATE, STATES.IDLE],
+  [STATES.DESIGN]: [STATES.DEVELOP, STATES.IDLE],
+  [STATES.MIGRATION_PLANNING]: [STATES.DEVELOP, STATES.IDLE],
+  [STATES.DEVELOP]: [STATES.REVIEW],  // 強制必須經過 REVIEW
+  [STATES.SKILL_CREATE]: [STATES.VALIDATE],
+  [STATES.REVIEW]: [STATES.TEST, STATES.DEVELOP],  // APPROVE → TEST, REJECT → DEVELOP
+  [STATES.TEST]: [STATES.COMPLETING, STATES.DEBUG, STATES.DEVELOP],  // PASS → COMPLETING, FAIL → DEBUG/DEVELOP
+  [STATES.VALIDATE]: [STATES.COMPLETING, STATES.SKILL_CREATE],
+  [STATES.DEBUG]: [STATES.DEVELOP, STATES.BLOCKED],
+  [STATES.COMPLETING]: [STATES.DONE, STATES.IDLE],
+  [STATES.LOOP_PAUSED]: [STATES.DEVELOP, STATES.REVIEW, STATES.TEST, STATES.DEBUG],  // 可恢復到之前狀態
+  [STATES.LOOP_COMPLETING]: [STATES.COMPLETING],
+  [STATES.PAUSED]: [STATES.IDLE, STATES.DEVELOP, STATES.REVIEW, STATES.TEST],
+  [STATES.BLOCKED]: [STATES.IDLE],  // 只能重新開始
+  [STATES.DONE]: [STATES.IDLE]
 };
 
 // Agent 類型對應
 const AGENT_STATE_MAP = {
-  'architect': 'PLANNING',
-  'designer': 'DESIGN',
-  'migration': 'MIGRATION_PLANNING',
-  'developer': 'DEVELOP',
-  'skills-agents': 'SKILL_CREATE',
-  'reviewer': 'REVIEW',
-  'tester': 'TEST',
-  'debugger': 'DEBUG'
+  [AGENT_TYPES.ARCHITECT]: STATES.PLANNING,
+  [AGENT_TYPES.DESIGNER]: STATES.DESIGN,
+  [AGENT_TYPES.MIGRATION]: STATES.MIGRATION_PLANNING,
+  [AGENT_TYPES.DEVELOPER]: STATES.DEVELOP,
+  [AGENT_TYPES.SKILLS_AGENTS]: STATES.SKILL_CREATE,
+  [AGENT_TYPES.REVIEWER]: STATES.REVIEW,
+  [AGENT_TYPES.TESTER]: STATES.TEST,
+  [AGENT_TYPES.DEBUGGER]: STATES.DEBUG
 };
 
 /**
@@ -72,11 +104,12 @@ const AGENT_STATE_MAP = {
 function loadState() {
   try {
     if (!fs.existsSync(STATE_FILE)) {
-      return { state: 'IDLE' };
+      return { state: STATES.IDLE };
     }
     return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
   } catch (error) {
-    return { state: 'IDLE' };
+    console.error(`[workflow-gate] 載入狀態失敗: ${error.message}`);
+    return { state: STATES.IDLE };
   }
 }
 
@@ -90,6 +123,7 @@ function loadConfig() {
     }
     return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
   } catch (error) {
+    console.error(`[workflow-gate] 載入配置失敗: ${error.message}`);
     return { mainAgentLimits: { enabled: false } };
   }
 }
@@ -105,7 +139,7 @@ function isCodeFile(filePath) {
 /**
  * 檢查 Main Agent 編輯限制
  */
-function checkMainAgentLimit(toolName, toolInput, _state, config) {
+function checkMainAgentLimit(toolName, toolInput, state, config) {
   // 功能未啟用
   if (!config.mainAgentLimits?.enabled) {
     return { allowed: true };
@@ -122,8 +156,8 @@ function checkMainAgentLimit(toolName, toolInput, _state, config) {
   }
 
   // 如果在 Sub Agent 內執行（透過 Task），不限制
-  // 這需要從環境變數或其他機制判斷
-  if (process.env.CLAUDE_IN_SUBAGENT === 'true') {
+  // 改用狀態檔案的 activeSubagent 判斷
+  if (state.activeSubagent) {
     return { allowed: true };
   }
 
@@ -144,38 +178,126 @@ function checkMainAgentLimit(toolName, toolInput, _state, config) {
 }
 
 /**
+ * 檢查測試失敗狀態
+ */
+function checkTestFailedBlock(subagentType, state) {
+  // 當測試失敗且未經過 debugger 修復時
+  if (state.task?.testFailed === true) {
+    // 只允許 debugger 執行
+    if (subagentType === AGENT_TYPES.DEBUGGER) {
+      return { allowed: true };
+    }
+
+    // 阻擋開始新任務
+    if (subagentType === AGENT_TYPES.ARCHITECT) {
+      return {
+        allowed: false,
+        reason: '❌ 測試失敗尚未修復！不能開始新任務。\n\n' +
+                `當前任務 Task ${state.task.current} 測試失敗。\n` +
+                '必須先呼叫 Task(debugger) 修復後才能繼續。'
+      };
+    }
+
+    // 阻擋開發新任務
+    if (subagentType === AGENT_TYPES.DEVELOPER) {
+      return {
+        allowed: false,
+        reason: '❌ 測試失敗尚未修復！不能繼續開發。\n\n' +
+                `Task ${state.task.current} 測試失敗。\n` +
+                '必須先呼叫 Task(debugger) 進行除錯。'
+      };
+    }
+  }
+
+  return { allowed: true };
+}
+
+/**
+ * 檢查 REVIEWER 通過後必須 TESTER
+ */
+function checkReviewerApprovedBlock(subagentType, state) {
+  // 當 REVIEWER 已通過但還沒測試時
+  if (state.task?.reviewed === true && !state.task?.tested) {
+    // 只允許 tester 執行
+    if (subagentType === AGENT_TYPES.TESTER) {
+      return { allowed: true };
+    }
+
+    // 阻擋其他 Task
+    if ([AGENT_TYPES.DEVELOPER, AGENT_TYPES.ARCHITECT, AGENT_TYPES.DESIGNER].includes(subagentType)) {
+      return {
+        allowed: false,
+        reason: '❌ REVIEWER 已通過，必須先執行 TESTER！\n\n' +
+                'D→R→T 流程：REVIEWER APPROVE 後，下一步必須是 Task(tester)。\n' +
+                '不能跳過測試直接開始其他工作。'
+      };
+    }
+  }
+
+  return { allowed: true };
+}
+
+/**
  * 檢查狀態轉換
  */
 function checkStateTransition(toolName, toolInput, state) {
-  const currentState = state.state || 'IDLE';
+  const currentState = state.state || STATES.IDLE;
 
   // Task 工具 - 檢查 sub agent 類型
   if (toolName === 'Task') {
-    const subagentType = toolInput.subagent_type?.toLowerCase();
+    const rawSubagentType = toolInput.subagent_type?.toLowerCase();
+    // 移除 "workflow:" 前綴以支援 plugin agent 格式
+    const subagentType = rawSubagentType?.replace(/^workflow:/, '');
     const targetState = AGENT_STATE_MAP[subagentType];
 
     if (!targetState) {
       return { allowed: true };  // 非工作流 agent
     }
 
+    // 🔴 新增：測試失敗阻擋
+    const testFailedCheck = checkTestFailedBlock(subagentType, state);
+    if (!testFailedCheck.allowed) {
+      return testFailedCheck;
+    }
+
+    // 🔴 新增：REVIEWER 通過後強制 TESTER
+    const reviewerCheck = checkReviewerApprovedBlock(subagentType, state);
+    if (!reviewerCheck.allowed) {
+      return reviewerCheck;
+    }
+
     // 檢查 D→R→T 強制規則
-    if (currentState === 'DEVELOP' && subagentType === 'tester') {
+    // 1. DEVELOP 不能直接跳到 TEST
+    if (currentState === STATES.DEVELOP && subagentType === AGENT_TYPES.TESTER) {
       return {
         allowed: false,
         reason: '❌ 違反 D→R→T：開發完成後必須先經過 REVIEW，不能直接跳到 TEST。請先使用 Task(reviewer)。'
       };
     }
 
+    // 2. REVIEW 只能從 DEVELOP 來
+    if (targetState === STATES.REVIEW && currentState !== STATES.DEVELOP && currentState !== STATES.IDLE) {
+      return {
+        allowed: false,
+        reason: `❌ 違反 D→R→T：REVIEW 只能從 DEVELOP 狀態啟動（當前：${currentState}）。`
+      };
+    }
+
+    // 3. TEST 只能從 REVIEW 來
+    if (targetState === STATES.TEST && currentState !== STATES.REVIEW && currentState !== STATES.IDLE) {
+      return {
+        allowed: false,
+        reason: `❌ 違反 D→R→T：TEST 只能從 REVIEW 狀態啟動（當前：${currentState}）。`
+      };
+    }
+
     // 檢查是否允許啟動該 agent
     const validTargets = VALID_TRANSITIONS[currentState] || [];
-    if (targetState && !validTargets.includes(targetState) && currentState !== 'IDLE') {
-      // IDLE 狀態允許較寬鬆的轉換
-      if (currentState !== 'IDLE') {
-        return {
-          allowed: false,
-          reason: `當前狀態 ${currentState} 不允許轉換到 ${targetState}。允許的目標：${validTargets.join(', ')}`
-        };
-      }
+    if (targetState && !validTargets.includes(targetState)) {
+      return {
+        allowed: false,
+        reason: `當前狀態 ${currentState} 不允許轉換到 ${targetState}。允許的目標：${validTargets.join(', ')}`
+      };
     }
   }
 
@@ -186,7 +308,7 @@ function checkStateTransition(toolName, toolInput, state) {
     // 只檢查程式碼檔案
     if (filePath && isCodeFile(filePath)) {
       // REVIEW 階段不能修改程式碼
-      if (currentState === 'REVIEW') {
+      if (currentState === STATES.REVIEW) {
         return {
           allowed: false,
           reason: '❌ REVIEW 階段不能修改程式碼。如需修改，請先完成審查（REJECT 回到 DEVELOP）。'
@@ -194,10 +316,30 @@ function checkStateTransition(toolName, toolInput, state) {
       }
 
       // TEST 階段不能修改程式碼
-      if (currentState === 'TEST') {
+      if (currentState === STATES.TEST) {
         return {
           allowed: false,
           reason: '❌ TEST 階段不能修改程式碼。如需修改，請等測試結果後回到 DEVELOP。'
+        };
+      }
+    }
+  }
+
+  // COMPLETING 狀態 - 檢查收尾動作是否完成
+  if (currentState === STATES.COMPLETING) {
+    // 只阻擋 Task 操作（開始新工作）
+    if (toolName === 'Task') {
+      // 檢查收尾狀態
+      const completionDone = state.completion?.allRequiredDone;
+
+      if (!completionDone) {
+        return {
+          allowed: false,
+          reason: '❌ COMPLETING 階段必須先完成收尾動作！\n\n' +
+                  '必須執行：\n' +
+                  '1. git add . && git commit -m "..." (提交變更)\n' +
+                  '2. mv openspec/changes/[id] openspec/archive/ (歸檔 OpenSpec)\n\n' +
+                  '完成後才能開始新任務。'
         };
       }
     }

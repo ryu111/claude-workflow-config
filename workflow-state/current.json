@@ -1,20 +1,20 @@
 {
   "version": "2.0",
-  "changeId": "chiikawa-calculator",
+  "changeId": "add-usagi-calculator",
   "state": "DONE",
-  "previousState": "COMPLETING",
+  "previousState": "TESTING",
   "mainAgentOps": {
     "directCode": 0,
     "bypassed": 0,
     "blocked": 0,
-    "delegated": 5,
-    "directEdits": 36
+    "delegated": 6,
+    "directEdits": 54
   },
   "timestamps": {
-    "created": "2026-01-19T11:00:00Z",
-    "lastActivity": "2026-01-19T14:31:11.216Z",
-    "stateChanged": "2026-01-19T14:30:00.000Z",
-    "workflowStarted": "2026-01-19T13:40:00.000Z"
+    "created": "2026-01-19T16:00:00Z",
+    "lastActivity": "2026-01-19T18:25:02.251Z",
+    "stateChanged": "2026-01-19T17:30:00.000Z",
+    "workflowStarted": "2026-01-19T16:00:00.000Z"
   },
   "metadata": {}
 }

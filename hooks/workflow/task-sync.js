@@ -16,6 +16,13 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
+// 任務狀態常數
+const TaskStatus = {
+  PENDING: 'pending',
+  IN_PROGRESS: 'in_progress',
+  COMPLETED: 'completed'
+};
+
 // 配置路徑
 const STATE_FILE = path.join(os.homedir(), '.claude/workflow-state/current.json');
 
@@ -29,6 +36,7 @@ function loadState() {
     }
     return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
   } catch (error) {
+    console.error(`⚠️ 載入狀態失敗: ${error.message}`);
     return {};
   }
 }
@@ -46,6 +54,7 @@ function saveState(state) {
     fs.writeFileSync(tempFile, JSON.stringify(state, null, 2));
     fs.renameSync(tempFile, STATE_FILE);
   } catch (error) {
+    console.error(`⚠️ 儲存狀態失敗: ${error.message}`);
     try { fs.unlinkSync(tempFile); } catch (e) { /* ignore */ }
   }
 }
@@ -70,7 +79,7 @@ function parseTasksMd(content) {
 
   for (const line of lines) {
     // 解析 Group 標題
-    const groupMatch = line.match(/^##\s+(\d+)\.\s+(.+?)\s*\(?(sequential|parallel)?\)?$/i);
+    const groupMatch = line.match(/^##\s+(?:(\d+)\.\s+)?(.+?)\s*\(?(sequential|parallel)?\)?$/i);
     if (groupMatch) {
       currentGroup = groupMatch[2].trim();
       currentMode = groupMatch[3]?.toLowerCase() || 'sequential';
@@ -78,9 +87,18 @@ function parseTasksMd(content) {
     }
 
     // 解析任務項目
-    const taskMatch = line.match(/^-\s+\[([ x])\]\s+(\d+(?:\.\d+)?)\s+(.+?)(?:\s*\|\s*files?:\s*(.+?))?(?:\s*\|\s*output:\s*(.+?))?$/i);
+    const taskMatch = line.match(/^-\s+\[([ xX~>])\]\s+(\d+(?:\.\d+)?)\s+(.+?)(?:\s*\|\s*files?:\s*(.+?))?(?:\s*\|\s*output:\s*(.+?))?$/i);
     if (taskMatch) {
-      const completed = taskMatch[1] === 'x';
+      const checkboxMark = taskMatch[1];
+      let status;
+      if (checkboxMark === 'x' || checkboxMark === 'X') {
+        status = TaskStatus.COMPLETED;
+      } else if (checkboxMark === '~' || checkboxMark === '>') {
+        status = TaskStatus.IN_PROGRESS;
+      } else {
+        status = TaskStatus.PENDING;
+      }
+
       const id = taskMatch[2];
       const title = taskMatch[3].trim();
       const files = taskMatch[4]?.split(',').map(f => f.trim()) || [];
@@ -89,7 +107,7 @@ function parseTasksMd(content) {
       tasks.push({
         id,
         content: title,
-        status: completed ? 'completed' : 'pending',
+        status,
         group: currentGroup,
         mode: currentMode,
         files,
@@ -127,9 +145,9 @@ function updateTasksMdCheckbox(filePath, taskId, completed) {
 
     let content = fs.readFileSync(filePath, 'utf8');
 
-    // 尋找並更新對應的 checkbox
+    // 尋找並更新對應的 checkbox（支援所有狀態：空格、x、X、~、>）
     const pattern = new RegExp(
-      `^(-\\s+\\[)[ x](\\]\\s+${taskId.replace('.', '\\.')}\\s+)`,
+      `^(-\\s+\\[)[ xX~>](\\]\\s+${taskId.replace('.', '\\.')}\\s+)`,
       'm'
     );
 
@@ -138,6 +156,43 @@ function updateTasksMdCheckbox(filePath, taskId, completed) {
 
     if (newContent !== content) {
       // 原子寫入
+      const tempFile = `${filePath}.${process.pid}.tmp`;
+      fs.writeFileSync(tempFile, newContent);
+      fs.renameSync(tempFile, filePath);
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    const errorMsg = `無法更新 tasks.md: ${error.message}\n  File: ${filePath}\n  TaskId: ${taskId}`;
+    console.error(`⚠️ ${errorMsg}`);
+    if (process.env.DEBUG_HOOKS) {
+      console.error(error.stack);
+    }
+    return false;
+  }
+}
+
+/**
+ * 更新 tasks.md 中的 checkbox 為進行中狀態
+ */
+function updateTasksMdToInProgress(filePath, taskId) {
+  try {
+    if (!fs.existsSync(filePath)) {
+      return false;
+    }
+
+    let content = fs.readFileSync(filePath, 'utf8');
+
+    // 將 [ ] 改為 [~]
+    const pattern = new RegExp(
+      `^(-\\s+\\[) (\\]\\s+${taskId.replace('.', '\\.')}\\s+)`,
+      'm'
+    );
+
+    const newContent = content.replace(pattern, '$1~$2');
+
+    if (newContent !== content) {
       const tempFile = `${filePath}.${process.pid}.tmp`;
       fs.writeFileSync(tempFile, newContent);
       fs.renameSync(tempFile, filePath);
@@ -200,6 +255,7 @@ function main() {
   try {
     input = fs.readFileSync(0, 'utf8');
   } catch (error) {
+    console.error(`⚠️ 讀取輸入失敗: ${error.message}`);
     return;
   }
 
@@ -207,6 +263,7 @@ function main() {
   try {
     hookInput = JSON.parse(input);
   } catch (error) {
+    console.error(`⚠️ 解析 JSON 失敗: ${error.message}`);
     return;
   }
 
@@ -260,25 +317,124 @@ function main() {
     }
   }
 
-  // TESTER 通過 → 更新 tasks.md checkbox
-  if (subagentType === 'tester') {
-    const output = toolOutput.toLowerCase();
-    const isPassed = output.includes('pass') || output.includes('通過') || output.includes('✅');
+  // DEBUGGER 完成 → 清除測試失敗狀態
+  if (subagentType === 'debugger' || subagentType?.includes('debugger')) {
+    if (state.task?.testFailed) {
+      // 清除測試失敗狀態，允許重新測試
+      delete state.task.testFailed;
+      delete state.task.failedAt;
+      state.task.debugged = true;
+      state.task.debuggedAt = new Date().toISOString();
+      state.taskSync = state.taskSync || {};
+      state.taskSync.lastSyncAt = new Date().toISOString();
+      saveState(state);
 
-    if (isPassed && state.task?.current && state.taskSync?.tasksFile) {
-      const updated = updateTasksMdCheckbox(
-        state.taskSync.tasksFile,
-        state.task.current,
-        true
-      );
+      console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log(`🔧 Task ${state.task.current} Debug 完成`);
+      console.log('   現在可以重新呼叫 Task(tester) 進行測試');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    }
+  }
+
+  // DEVELOPER 開始 → 標記任務為進行中（但檢查是否有未解決的測試失敗）
+  if (subagentType === 'developer' || subagentType?.includes('developer')) {
+    // 檢查是否有未解決的測試失敗
+    if (state.task?.testFailed) {
+      console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log(`🚫 無法開始新任務！Task ${state.task.current} 測試失敗尚未修復`);
+      console.log('   必須先呼叫 Task(debugger) 進行除錯');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+      return;
+    }
+
+    // 從 prompt 中提取任務編號
+    const prompt = toolInput.prompt || '';
+    const taskMatch = prompt.match(/Task\s+(\d+(?:\.\d+)?)/i);
+
+    if (taskMatch && state.taskSync?.tasksFile) {
+      const taskId = taskMatch[1];
+      const updated = updateTasksMdToInProgress(state.taskSync.tasksFile, taskId);
 
       if (updated) {
-        // 更新同步狀態
-        state.taskSync.completed = (state.taskSync.completed || 0) + 1;
+        // 更新狀態
+        state.task = { current: taskId };
+        state.taskSync.inProgress = (state.taskSync.inProgress || 0) + 1;
         state.taskSync.lastSyncAt = new Date().toISOString();
         saveState(state);
 
-        console.log(`\n## ✅ tasks.md 已更新: Task ${state.task.current} 完成`);
+        console.log(`\n## 🔄 tasks.md 已更新: Task ${taskId} 進行中`);
+      }
+    }
+  }
+
+  // REVIEWER 通過 → 記錄已審查（但不標記完成）
+  if (subagentType === 'reviewer' || subagentType?.includes('reviewer')) {
+    const output = (toolOutput || '').toLowerCase();
+    const isApproved = output.includes('approved') || output.includes('通過') ||
+                       output.includes('lgtm') || output.includes('✅') ||
+                       !output.includes('request changes') && !output.includes('reject');
+
+    if (isApproved && state.task?.current) {
+      // 記錄已通過審查
+      state.task.reviewed = true;
+      state.task.reviewedAt = new Date().toISOString();
+      state.taskSync.lastSyncAt = new Date().toISOString();
+      saveState(state);
+
+      console.log(`\n## 🔍 Task ${state.task.current} 審查通過，等待測試`);
+    }
+  }
+
+  // TESTER 處理 → 更新 tasks.md checkbox（必須先經過 REVIEWER）
+  if (subagentType === 'tester' || subagentType?.includes('tester')) {
+    const output = (toolOutput || '').toLowerCase();
+    const isPassed = output.includes('pass') || output.includes('通過') || output.includes('✅');
+    const hasFailed = output.includes('fail') || output.includes('失敗') || output.includes('❌');
+
+    // 從 prompt 中提取任務編號（優先）或從狀態讀取
+    const prompt = toolInput.prompt || '';
+    const taskMatch = prompt.match(/Task\s+(\d+(?:\.\d+)?)/i);
+    const taskId = taskMatch?.[1] || state.task?.current;
+
+    // 測試失敗 → 記錄失敗狀態，強制必須經過 DEBUGGER
+    if (hasFailed && taskId) {
+      state.task = state.task || { current: taskId };
+      state.task.testFailed = true;
+      state.task.failedAt = new Date().toISOString();
+      state.taskSync = state.taskSync || {};
+      state.taskSync.lastSyncAt = new Date().toISOString();
+      saveState(state);
+
+      console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log(`🔴 Task ${taskId} 測試失敗！`);
+      console.log('   必須呼叫 Task(debugger) 修復後才能繼續');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+      return;
+    }
+
+    if (isPassed && taskId && state.taskSync?.tasksFile) {
+      // 檢查是否經過 REVIEWER（強制 R→T 流程）
+      const hasBeenReviewed = state.task?.reviewed === true;
+
+      if (!hasBeenReviewed) {
+        // 沒有經過 REVIEWER，輸出警告但不標記完成
+        console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log(`⚠️ Task ${taskId} 測試通過，但尚未經過 REVIEWER 審查！`);
+        console.log('   必須先呼叫 Task(reviewer) 後才能標記完成');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+        return;
+      }
+
+      const updated = updateTasksMdCheckbox(state.taskSync.tasksFile, taskId, true);
+
+      if (updated) {
+        state.taskSync.completed = (state.taskSync.completed || 0) + 1;
+        state.taskSync.inProgress = Math.max(0, (state.taskSync.inProgress || 1) - 1);
+        state.taskSync.lastSyncAt = new Date().toISOString();
+        delete state.task;  // 清除當前任務（包含 reviewed 狀態）
+        saveState(state);
+
+        console.log(`\n## ✅ tasks.md 已更新: Task ${taskId} 完成（R→T 流程驗證通過）`);
       }
     }
   }
