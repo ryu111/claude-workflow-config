@@ -290,6 +290,68 @@ test('user can complete checkout', async ({ page }) => {
 
 ---
 
+## 多進程測試規範
+
+### 🔴 問題：測試殘留進程
+
+測試涉及 `ProcessPoolExecutor` 或 `multiprocessing` 時，**測試失敗或中斷會產生孤兒進程**。
+
+### pytest fixture 正確寫法
+
+```python
+import pytest
+from concurrent.futures import ProcessPoolExecutor
+import multiprocessing as mp
+
+@pytest.fixture
+def executor():
+    """確保測試結束後清理執行器"""
+    mp_context = mp.get_context('spawn')
+    exec = ProcessPoolExecutor(max_workers=2, mp_context=mp_context)
+    yield exec
+    # teardown：無論測試成功或失敗都會執行
+    exec.shutdown(wait=True, cancel_futures=True)
+
+
+def test_parallel_processing(executor):
+    futures = [executor.submit(work, i) for i in range(10)]
+    results = [f.result() for f in futures]
+    assert len(results) == 10
+```
+
+### 測試多進程系統的技巧
+
+```python
+@pytest.fixture(scope="module")
+def hyperloop_controller():
+    """模組級 fixture：整個測試檔案共用一個 controller"""
+    controller = HyperLoopController(config)
+    yield controller
+    controller.cleanup()  # 確保清理
+
+
+@pytest.fixture(autouse=True)
+def cleanup_orphans():
+    """自動清理孤兒進程（每個測試後執行）"""
+    yield
+    # teardown
+    import psutil
+    current = psutil.Process()
+    for child in current.children(recursive=True):
+        if 'multiprocessing' in child.name():
+            child.terminate()
+```
+
+### 檢查清單
+
+- [ ] 使用 fixture 管理 executor 生命週期
+- [ ] 在 yield 後確保 shutdown
+- [ ] 考慮 `scope="module"` 減少重複創建
+- [ ] 添加 `autouse=True` 清理 fixture
+- [ ] 使用 `spawn` 模式避免 fork 問題
+
+---
+
 ## 深度參考
 
 | 主題 | 文件 |

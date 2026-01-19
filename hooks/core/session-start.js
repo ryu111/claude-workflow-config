@@ -505,6 +505,9 @@ async function onSessionStart(context) {
  * Main execution logic (wrapped by timeout)
  */
 async function executeSessionStart(context) {
+    // Declare memoryClient at function scope so finally block can access it
+    let memoryClient = null;
+
     try {
         // Load configuration first to check verbosity settings
         const config = await loadConfig();
@@ -566,7 +569,7 @@ async function executeSessionStart(context) {
         // Initialize memory client and detect storage backend
         const showStorageSource = config.memoryService?.showStorageSource !== false; // Default to true
         const sourceDisplayMode = config.memoryService?.sourceDisplayMode || 'brief';
-        let memoryClient = null;
+        // memoryClient is declared at function scope for finally block access
         let storageInfo = null;
         let connectionInfo = null;
 

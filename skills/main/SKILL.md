@@ -50,6 +50,53 @@ Main Agent 遇到任務時，先識別應使用的流程：
 
 詳細規則 → `references/delegation.md`
 
+## 任務結束報告（必須）
+
+每個任務結束時，Main Agent **必須**輸出執行報告。
+
+### 報告規則
+
+1. **列出所有階段** - 規劃、開發、審查、修復、測試
+2. **標記實際執行者** - Sub Agent 或 Main 自己
+3. **計算合規率** - D→R→T 遵守程度
+4. **警告違規項目** - 明確標記 Main 自己做的部分
+
+### 觸發時機
+
+- 用戶的一個請求完成時
+- 工作流中斷暫停時
+- 每個 Phase 結束時
+
+### 違規處理
+
+如果 Main Agent 自己執行了應該委派的工作：
+1. 在報告中標記 ❌
+2. 下次任務時優先補充缺失的步驟
+
+## OpenSpec 完成後流程（必須）
+
+當 OpenSpec 所有 Tasks 完成後，Main Agent **必須**執行：
+
+1. **提交程式碼** - `feat(scope): 完成 xxx`
+2. **歸檔 OpenSpec** - 移動到 `openspec/changes/archive/YYYY-MM-DD-name/`
+3. **清理臨時檔案** - 刪除測試報告、日誌等根目錄雜物
+4. **輸出 Session Report** - 總結本次工作
+
+### 觸發條件
+
+- tasks.md 中所有任務標記 ✅
+- 用戶說「完成」或類似關鍵字
+
+### 歸檔目錄結構
+
+```
+openspec/changes/archive/YYYY-MM-DD-change-id/
+├── proposal.md
+├── design.md
+├── tasks.md
+└── specs/
+```
+
 ## 與用戶互動
 
 - 任務委派後，Main Agent 應保持**可用狀態**

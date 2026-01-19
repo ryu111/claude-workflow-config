@@ -230,5 +230,16 @@
     "customSafePatterns": [],
     "customDestructivePatterns": [],
     "logDecisions": false
+  },
+  "loopPersistence": {
+    "enabled": true,
+    "stateFile": "~/.claude/loop-state/current.json",
+    "archiveDir": "~/.claude/loop-state/archive",
+    "maxArchiveAge": 604800,
+    "autoRecovery": {
+      "enabled": true,
+      "promptOnSessionStart": true,
+      "maxIdleMinutes": 30
+    }
   }
 }

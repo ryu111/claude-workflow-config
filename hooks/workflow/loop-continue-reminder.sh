@@ -6,17 +6,29 @@
 #
 # 觸發時機：UserPromptSubmit
 
+# 常數定義
 LOOP_STATE=".claude/ralph-loop.local.md"
+CANCEL_PATTERN="(cancel|取消|停止|stop).*loop|/ralph-loop:cancel"
 
 # 檢查 Loop 是否運行中
 if [ -f "$LOOP_STATE" ]; then
-    # 讀取用戶輸入（從 stdin）
-    INPUT=$(cat)
+    # 讀取用戶輸入（從 stdin，帶錯誤處理）
+    INPUT=$(cat 2>/dev/null || echo "{}")
+
+    # 數值驗證：確保 INPUT 不為空
+    if [ -z "$INPUT" ]; then
+        INPUT="{}"
+    fi
+
     USER_MESSAGE=$(echo "$INPUT" | jq -r '.user_message // ""' 2>/dev/null || echo "")
 
-    # 檢查是否是取消指令（用戶說只用指令取消）
-    # 常見取消指令：/ralph-loop:cancel-ralph, /cancel, stop loop 等
-    if echo "$USER_MESSAGE" | grep -qiE "(cancel|取消|停止|stop).*loop|/ralph-loop:cancel"; then
+    # 數值驗證：確保 USER_MESSAGE 被提取成功
+    if [ -z "$USER_MESSAGE" ]; then
+        USER_MESSAGE=""
+    fi
+
+    # 檢查是否是取消指令（使用常數模式）
+    if echo "$USER_MESSAGE" | grep -qiE "$CANCEL_PATTERN" 2>/dev/null; then
         # 這是取消指令，不提醒
         exit 0
     fi

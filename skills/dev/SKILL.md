@@ -424,6 +424,81 @@ For more templates → read `references/templates.md`
 
 ---
 
+## 多進程清理規範
+
+### 🔴 必須遵守
+
+使用 `ProcessPoolExecutor` 或 `multiprocessing` 時，**必須確保子進程在任何情況下都能被清理**。
+
+### 問題：孤兒進程
+
+```python
+# ❌ 危險：強制終止時子進程變成孤兒
+with ProcessPoolExecutor(max_workers=4) as executor:
+    # 如果主進程被 kill -9，子進程不會被清理
+    futures = [executor.submit(work, item) for item in items]
+```
+
+### 解決方案
+
+```python
+import atexit
+import signal
+import multiprocessing as mp
+from concurrent.futures import ProcessPoolExecutor
+
+# 1. 全域追蹤活躍的執行器
+_active_executors: List[ProcessPoolExecutor] = []
+
+# 2. atexit 清理函數
+def _cleanup_all_executors():
+    for executor in _active_executors[:]:
+        try:
+            executor.shutdown(wait=False, cancel_futures=True)
+        except Exception:
+            pass
+    _active_executors.clear()
+
+atexit.register(_cleanup_all_executors)
+
+# 3. 信號處理器
+def _signal_handler(signum, frame):
+    _cleanup_all_executors()
+    signal.signal(signum, signal.SIG_DFL)
+    os.kill(os.getpid(), signum)
+
+signal.signal(signal.SIGTERM, _signal_handler)
+signal.signal(signal.SIGINT, _signal_handler)
+
+# 4. 使用 spawn 模式（更容易清理）
+def execute_batch(items):
+    mp_context = mp.get_context('spawn')
+    executor = ProcessPoolExecutor(
+        max_workers=len(items),
+        mp_context=mp_context
+    )
+    _active_executors.append(executor)
+
+    try:
+        futures = [executor.submit(work, item) for item in items]
+        results = [f.result() for f in futures]
+        return results
+    finally:
+        executor.shutdown(wait=True)
+        if executor in _active_executors:
+            _active_executors.remove(executor)
+```
+
+### 檢查清單
+
+- [ ] 使用全域列表追蹤所有 ProcessPoolExecutor
+- [ ] 註冊 atexit 清理函數
+- [ ] 處理 SIGTERM 和 SIGINT 信號
+- [ ] 在 finally 中確保 shutdown 被調用
+- [ ] 考慮使用 spawn 模式而非 fork
+
+---
+
 ## 深度參考
 
 | 主題 | 文件 |
