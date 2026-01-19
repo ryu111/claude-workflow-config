@@ -1,26 +1,20 @@
 {
   "version": "2.0",
-  "changeId": "test-change-001",
-  "state": "REVIEW",
-  "previousState": "DEVELOP",
+  "changeId": "chiikawa-calculator",
+  "state": "DONE",
+  "previousState": "COMPLETING",
   "mainAgentOps": {
     "directCode": 0,
-    "bypassed": 1,
-    "delegated": 42,
-    "directEdits": 56
+    "bypassed": 0,
+    "blocked": 0,
+    "delegated": 5,
+    "directEdits": 36
   },
   "timestamps": {
-    "created": "2026-01-19T10:00:00Z",
-    "lastActivity": "2026-01-19T10:30:04.572Z",
-    "stateChanged": "2026-01-19T07:58:28.974Z",
-    "workflowStarted": "2026-01-19T05:34:13.217Z"
+    "created": "2026-01-19T11:00:00Z",
+    "lastActivity": "2026-01-19T14:31:11.216Z",
+    "stateChanged": "2026-01-19T14:30:00.000Z",
+    "workflowStarted": "2026-01-19T13:40:00.000Z"
   },
-  "metadata": {
-    "lastBypass": {
-      "state": "TEST",
-      "skippedState": "TEST",
-      "reason": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "timestamp": "2026-01-19T05:32:24.412Z"
-    }
-  }
+  "metadata": {}
 }
