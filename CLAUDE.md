@@ -62,7 +62,7 @@
 ✅ 使用 OpenSpec + AskUserQuestion + TodoWrite
 ```
 
-詳細規則 → `skills/main/references/delegation.md`
+詳細規則 → Workflow Plugin `main` skill
 
 ---
 
@@ -93,46 +93,12 @@
 
 **選擇原則**：根據**任務涉及的領域**決定，而非只看動詞。
 
-## Available Skills
-
-### Agent 專業知識
-
-| Skill | Agent | 用途 |
-|-------|-------|------|
-| **dev** | DEVELOPER | Clean Code、設計模式、安全、效能 |
-| **refactor** | DEVELOPER | Code Smells 識別、重構技術 |
-| **review** | REVIEWER | Code Smells、OWASP、SOLID |
-| **testing** | TESTER | 測試策略、Mock、邊界測試 |
-| **ui** | DESIGNER | 視覺設計規範 |
-| **ux** | DESIGNER | 使用者體驗規範 |
-| **browser** | TESTER/DEBUGGER | 瀏覽器自動化 (agent-browser CLI) |
-
-### 系統 Skills
-
-| Skill | 用途 |
-|-------|------|
-| **core** | 核心規則（D→R→T、禁止硬編碼、回歸測試）|
-| **main** | Main Agent 調度規則 |
-| **skill-agent** | Skills 與 Agents 建立維護 |
-| **workflow** | 工作流設計與驗證 |
-| **migration** | 工具/框架遷移規劃 |
-| **hooks-guide** | Hooks 配置指南 |
-
 ## Workflow Limits
 
 | 參數 | 值 |
 |------|-----|
 | max_iterations | 10 |
 | max_retries | 3 |
-
-## Agents Location
-
-```
-~/.claude/agents/
-├── architect.md       ├── developer.md      ├── tester.md
-├── skills-agents.md   ├── reviewer.md       ├── debugger.md
-├── workflow.md        ├── designer.md       └── migration.md
-```
 
 ## 🔴 紅線規則
 
@@ -142,4 +108,4 @@
 2. 連續發送多個 Read/Grep → 停止，合併為一次發送
 3. Main Agent 長時間寫程式碼 → 停止，改用 Task(developer)
 
-**詳細規則請參考 `core` 和 `main` skills。**
+**詳細規則請參考 Workflow Plugin 的 `core` 和 `main` skills。**

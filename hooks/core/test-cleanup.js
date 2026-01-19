@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const STATE_FILE = path.join(os.homedir(), '.claude/tests/workflow/results/workflow-state.json');
+const STATE_FILE = path.join(os.homedir(), '.claude/logs/workflow/workflow-state.json');
 
 // 建立測試狀態（11 筆 pendingEdits + 6 筆 pendingDeveloperTasks）
 const testState = {

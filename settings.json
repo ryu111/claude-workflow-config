@@ -1,4 +1,9 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(git reset:*)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
@@ -108,7 +113,6 @@
     ],
     "PreToolUse": [
       {
-        "matchers": ["mcp__"],
         "hooks": [
           {
             "type": "command",
@@ -118,7 +122,6 @@
         ]
       },
       {
-        "matchers": ["Edit", "Write", "Task"],
         "hooks": [
           {
             "type": "command",
@@ -128,7 +131,6 @@
         ]
       },
       {
-        "matchers": ["Task"],
         "hooks": [
           {
             "type": "command",
@@ -193,11 +195,6 @@
     ],
     "PostToolUse": [
       {
-        "matchers": [
-          "Edit",
-          "Write",
-          "Bash"
-        ],
         "hooks": [
           {
             "type": "command",
@@ -207,11 +204,6 @@
         ]
       },
       {
-        "matchers": [
-          "Edit",
-          "Write",
-          "Task"
-        ],
         "hooks": [
           {
             "type": "command",
@@ -221,9 +213,6 @@
         ]
       },
       {
-        "matchers": [
-          "Task"
-        ],
         "hooks": [
           {
             "type": "command",
@@ -238,11 +227,6 @@
         ]
       },
       {
-        "matchers": [
-          "Edit",
-          "Write",
-          "Task"
-        ],
         "hooks": [
           {
             "type": "command",
@@ -252,12 +236,6 @@
         ]
       },
       {
-        "matchers": [
-          "Edit",
-          "Write",
-          "Bash",
-          "Task"
-        ],
         "hooks": [
           {
             "type": "command",
@@ -267,10 +245,6 @@
         ]
       },
       {
-        "matchers": [
-          "Edit",
-          "Write"
-        ],
         "hooks": [
           {
             "type": "command",
@@ -280,10 +254,6 @@
         ]
       },
       {
-        "matchers": [
-          "Read",
-          "Grep"
-        ],
         "hooks": [
           {
             "type": "command",
@@ -293,9 +263,6 @@
         ]
       },
       {
-        "matchers": [
-          "Bash"
-        ],
         "hooks": [
           {
             "type": "command",
@@ -306,6 +273,10 @@
       }
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "/Users/sbu/.claude/hooks/ui/statusline.sh"
+  },
   "enabledPlugins": {
     "context7@claude-plugins-official": true,
     "github@claude-plugins-official": true,
@@ -313,16 +284,8 @@
     "security-guidance@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
-    "ralph-loop@claude-plugins-official": true
+    "ralph-loop@claude-plugins-official": true,
+    "workflow@local": true
   },
-  "language": "繁體中文",
-  "statusLine": {
-    "type": "command",
-    "command": "/Users/sbu/.claude/hooks/ui/statusline.sh"
-  },
-  "permissions": {
-    "allow": [
-      "Bash(git reset:*)"
-    ]
-  }
+  "language": "繁體中文"
 }

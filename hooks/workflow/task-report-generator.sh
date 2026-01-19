@@ -13,7 +13,7 @@
 # - 執行者分佈（Main vs Subagent）
 # - 違規記錄摘要
 
-RESULTS_DIR="$HOME/.claude/tests/workflow/results"
+RESULTS_DIR="$HOME/.claude/logs/workflow"
 TASK_LOG="$RESULTS_DIR/task-execution.jsonl"
 VIOLATIONS_LOG="$RESULTS_DIR/workflow-violations.jsonl"
 DELEGATION_LOG="$RESULTS_DIR/delegation.log"

@@ -5,10 +5,10 @@
 #
 # 觸發時機：PreToolUse (Task)
 #
-# 輸出：追加到 ~/.claude/tests/workflow/results/delegation.log
+# 輸出：追加到 ~/.claude/logs/workflow/delegation.log
 
 # 常數定義
-LOG_FILE="$HOME/.claude/tests/workflow/results/delegation.log"
+LOG_FILE="$HOME/.claude/logs/workflow/delegation.log"
 PROMPT_PREVIEW_LENGTH=100
 
 mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || exit 0

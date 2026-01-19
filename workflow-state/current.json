@@ -7,11 +7,11 @@
     "directCode": 0,
     "bypassed": 1,
     "delegated": 42,
-    "directEdits": 33
+    "directEdits": 56
   },
   "timestamps": {
     "created": "2026-01-19T10:00:00Z",
-    "lastActivity": "2026-01-19T07:58:28.977Z",
+    "lastActivity": "2026-01-19T10:30:04.572Z",
     "stateChanged": "2026-01-19T07:58:28.974Z",
     "workflowStarted": "2026-01-19T05:34:13.217Z"
   },

@@ -5,9 +5,9 @@
 #
 # 觸發時機：PreToolUse (Task)
 #
-# 輸出：追加到 ~/.claude/tests/workflow/results/task-execution.jsonl
+# 輸出：追加到 ~/.claude/logs/workflow/task-execution.jsonl
 
-LOG_FILE="$HOME/.claude/tests/workflow/results/task-execution.jsonl"
+LOG_FILE="$HOME/.claude/logs/workflow/task-execution.jsonl"
 mkdir -p "$(dirname "$LOG_FILE")"
 
 # 常數定義（防止 Magic Number）

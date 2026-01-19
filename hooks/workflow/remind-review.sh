@@ -3,7 +3,7 @@
 # This hook is triggered after Edit/Write operations
 
 # 常數
-STATE_FILE="$HOME/.claude/tests/workflow/results/workflow-state.json"
+STATE_FILE="$HOME/.claude/logs/workflow/workflow-state.json"
 WARNING_THRESHOLD_HEAVY=3
 WARNING_THRESHOLD_LIGHT=1
 

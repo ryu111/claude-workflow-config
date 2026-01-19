@@ -1,0 +1,214 @@
+#!/usr/bin/env bash
+# auto-preview.sh
+# PostToolUse (Task) Hook - 自動開啟 TESTER 成果預覽
+#
+# 功能：
+# - 當 TESTER 返回 PASS 時，自動開啟 output URL/檔案
+# - 支援跨平台（macOS、Linux、Windows）
+# - 根據檔案類型選擇適當的應用程式
+#
+# 輸入：從 stdin 接收 JSON 格式的 hook input
+# {
+#   "tool_name": "Task",
+#   "tool_input": { "subagent_type": "tester" },
+#   "tool_output": "... pass ... output: http://localhost:3000/dashboard ..."
+# }
+
+set -euo pipefail
+
+# ============================================================================
+# 常數定義
+# ============================================================================
+readonly CONFIG_FILE="${HOME}/.claude/workflow-config.json"
+readonly DEFAULT_AUTO_OPEN="true"
+readonly DEFAULT_DELAY_MS=1000
+
+readonly TOOL_NAME_TASK="Task"
+readonly SUBAGENT_TYPE_TESTER="tester"
+readonly PASS_KEYWORD="pass"
+
+readonly DEBUG="${DEBUG:-false}"
+
+# ============================================================================
+# 輔助函數
+# ============================================================================
+debug_log() {
+  [[ "$DEBUG" == "true" ]] && echo "[DEBUG] $*" >&2
+}
+
+# 驗證路徑安全性
+validate_path() {
+  local path="$1"
+
+  # 拒絕包含 ../ 的路徑（防止目錄遍歷攻擊）
+  if [[ "$path" =~ \.\. ]]; then
+    echo "⚠️  拒絕不安全的路徑: $path" >&2
+    return 1
+  fi
+
+  # 拒絕包含特殊字元的路徑（額外安全檢查）
+  if [[ "$path" =~ [;\|\&\$\`] ]]; then
+    echo "⚠️  路徑包含不安全的字元: $path" >&2
+    return 1
+  fi
+
+  return 0
+}
+
+# 跨平台開啟檔案
+open_file() {
+  local file="$1"
+
+  case "$(uname)" in
+    Darwin)
+      open "$file"
+      ;;
+    Linux)
+      xdg-open "$file" 2>/dev/null
+      ;;
+    MINGW*|CYGWIN*|MSYS*)
+      # Windows 的 start 命令需要空標題參數
+      cmd.exe /c start "" "$file" 2>/dev/null
+      ;;
+    *)
+      # 未知平台，嘗試常見命令
+      if command -v xdg-open &>/dev/null; then
+        xdg-open "$file"
+      elif command -v open &>/dev/null; then
+        open "$file"
+      else
+        echo "⚠️  無法自動開啟預覽：未找到適當的開啟命令" >&2
+        return 1
+      fi
+      ;;
+  esac
+}
+
+# 開啟檔案（如果存在）
+open_if_exists() {
+  local file="$1"
+  local emoji="$2"
+  local type="$3"
+
+  if [[ -f "$file" ]]; then
+    echo "## $emoji 開啟預覽: $file"
+    open_file "$file" || echo "⚠️  無法開啟 $type 檔案: $file" >&2
+  else
+    echo "⚠️  檔案不存在: $file" >&2
+  fi
+}
+
+# ============================================================================
+# 讀取配置
+# ============================================================================
+if [[ -f "$CONFIG_FILE" ]]; then
+  AUTO_OPEN=$(jq -r '.preview.autoOpenOnTaskComplete // "'"$DEFAULT_AUTO_OPEN"'"' "$CONFIG_FILE" 2>/dev/null || echo "$DEFAULT_AUTO_OPEN")
+  DELAY_MS=$(jq -r '.preview.delayMs // '"$DEFAULT_DELAY_MS" "$CONFIG_FILE" 2>/dev/null || echo "$DEFAULT_DELAY_MS")
+else
+  debug_log "配置檔案不存在，使用預設值"
+  AUTO_OPEN="$DEFAULT_AUTO_OPEN"
+  DELAY_MS="$DEFAULT_DELAY_MS"
+fi
+
+debug_log "AUTO_OPEN=$AUTO_OPEN, DELAY_MS=$DELAY_MS"
+
+# 如果未啟用自動預覽，直接退出
+if [[ "$AUTO_OPEN" != "true" ]]; then
+  debug_log "自動預覽已停用"
+  exit 0
+fi
+
+# ============================================================================
+# 解析 Hook Input
+# ============================================================================
+HOOK_INPUT=$(cat)
+debug_log "Received hook input"
+
+# 檢查是否為 Task 工具
+TOOL_NAME=$(echo "$HOOK_INPUT" | jq -r '.tool_name // ""')
+if [[ "$TOOL_NAME" != "$TOOL_NAME_TASK" ]]; then
+  debug_log "不是 Task 工具: $TOOL_NAME"
+  exit 0
+fi
+
+# 檢查是否為 tester agent
+SUBAGENT_TYPE=$(echo "$HOOK_INPUT" | jq -r '.tool_input.subagent_type // ""')
+if [[ "$SUBAGENT_TYPE" != "$SUBAGENT_TYPE_TESTER" ]]; then
+  debug_log "不是 tester agent: $SUBAGENT_TYPE"
+  exit 0
+fi
+
+# 獲取 tool output
+TOOL_OUTPUT=$(echo "$HOOK_INPUT" | jq -r '.tool_output // ""')
+
+# 檢查是否包含 "pass" (不區分大小寫)
+if ! echo "$TOOL_OUTPUT" | grep -qi "$PASS_KEYWORD"; then
+  debug_log "測試未通過"
+  exit 0
+fi
+
+# ============================================================================
+# 提取輸出路徑
+# ============================================================================
+# 支援的模式：
+# - "output: <path>"
+# - "Output: <path>"
+# - "preview: <path>"
+# - "url: <path>"
+OUTPUT=$(echo "$TOOL_OUTPUT" | grep -oiE "(output|preview|url):\s+([^\s,;]+)" | head -n1 | sed -E 's/(output|preview|url):\s+//i' | xargs)
+
+# 如果沒有找到 output，嘗試提取 http/https URL
+if [[ -z "$OUTPUT" ]]; then
+  OUTPUT=$(echo "$TOOL_OUTPUT" | grep -oE 'https?://[^\s]+' | head -n1)
+fi
+
+# 如果仍然沒有找到，嘗試提取檔案路徑（.html, .md, .pdf）
+if [[ -z "$OUTPUT" ]]; then
+  OUTPUT=$(echo "$TOOL_OUTPUT" | grep -oE '/[^\s]+\.(html|md|pdf)' | head -n1)
+fi
+
+# 如果沒有找到任何 output，靜默退出
+if [[ -z "$OUTPUT" ]]; then
+  debug_log "未找到輸出路徑"
+  exit 0
+fi
+
+debug_log "Found output: $OUTPUT"
+
+# 驗證路徑安全性
+if ! validate_path "$OUTPUT"; then
+  exit 1
+fi
+
+# ============================================================================
+# 延遲並開啟
+# ============================================================================
+# 延遲（使用 awk 進行浮點數計算，比 bc 更通用）
+DELAY_SEC=$(awk "BEGIN {printf \"%.3f\", $DELAY_MS / 1000}" 2>/dev/null || echo "1")
+sleep "$DELAY_SEC"
+
+# 判斷 output 類型並開啟
+if [[ "$OUTPUT" =~ ^https?:// ]]; then
+  # HTTP/HTTPS URL
+  echo "## 🖥️ 開啟預覽: $OUTPUT"
+  open_file "$OUTPUT" || echo "⚠️  無法開啟 URL: $OUTPUT" >&2
+elif [[ "$OUTPUT" =~ \.html$ ]]; then
+  # HTML 檔案
+  open_if_exists "$OUTPUT" "🖥️" "HTML"
+elif [[ "$OUTPUT" =~ \.md$ ]]; then
+  # Markdown 檔案
+  open_if_exists "$OUTPUT" "📄" "Markdown"
+elif [[ "$OUTPUT" =~ \.pdf$ ]]; then
+  # PDF 檔案
+  open_if_exists "$OUTPUT" "📕" "PDF"
+else
+  # 其他類型，嘗試當作檔案或目錄開啟
+  if [[ -e "$OUTPUT" ]]; then
+    echo "## 📂 開啟: $OUTPUT"
+    open_file "$OUTPUT" || echo "⚠️  無法開啟: $OUTPUT" >&2
+  else
+    echo "⚠️  不支援的輸出類型或檔案不存在: $OUTPUT" >&2
+  fi
+fi
+
+exit 0

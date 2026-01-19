@@ -1,0 +1,91 @@
+{
+  "$schema": "https://claude.ai/schemas/hooks.json",
+  "name": "workflow",
+  "version": "2.0.0",
+  "description": "Workflow Plugin - OpenSpec 工作流狀態管理與強制機制",
+  "hooks": {
+    "SessionStart": [
+      {
+        "script": "bypass-handler.js",
+        "description": "檢查是否需要載入 bypass 模式"
+      }
+    ],
+    "SessionEnd": [
+      {
+        "script": "session-report.js",
+        "description": "輸出委派統計報告"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "script": "workflow-gate.js",
+        "matcher": "tool.name in ['Edit', 'Write', 'Task']",
+        "description": "PreToolUse - 檢查是否在合法狀態下才能 Edit/Write/Task"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "script": "state-updater.js",
+        "matcher": "tool.name in ['Edit', 'Write', 'Task', 'Bash']",
+        "description": "PostToolUse #1 - 狀態更新（優先級最高）",
+        "order": 1
+      },
+      {
+        "script": "task-sync.js",
+        "matcher": "tool.name == 'Task'",
+        "description": "PostToolUse #2 - Task 完成後同步狀態",
+        "order": 2
+      },
+      {
+        "script": "status-display.js",
+        "matcher": "tool.name == 'Task'",
+        "description": "PostToolUse #3 - Task 完成後顯示狀態",
+        "order": 3
+      },
+      {
+        "script": "process-manager.js",
+        "matcher": "true",
+        "description": "PostToolUse #4 - Phase 生命週期管理",
+        "order": 4
+      },
+      {
+        "script": "loop-heartbeat.sh",
+        "matcher": "tool.name in ['Edit', 'Write', 'Bash', 'Task']",
+        "description": "PostToolUse #5 - Loop 心跳檢測",
+        "order": 5
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "script": "loop-continue-reminder.sh",
+        "description": "檢測到用戶輸入時，提醒 Loop 狀態"
+      }
+    ],
+    "PreCompact": [
+      {
+        "script": "pre-compact-save.sh",
+        "description": "壓縮前備份 workflow-state"
+      }
+    ]
+  },
+  "TODO": {
+    "missing_hooks": [
+      "fix-on-discovery.sh - PostToolUse (Bash) - 發現即修復",
+      "violation-tracker.js - PostToolUse (Edit/Write/Task) - 違規追蹤",
+      "loop-recovery-detector.js - SessionStart - Loop 恢復檢測"
+    ],
+    "excluded_global_hooks": [
+      "check-archive.sh - 屬於全局配置",
+      "cleanup-python.sh - 屬於全局配置",
+      "openspec-cleanup-reminder.sh - 屬於全局配置",
+      "usage-report.sh - 屬於全局配置",
+      "task-report-generator.sh - 屬於全局配置",
+      "check-core-skill.sh - 屬於全局配置",
+      "delegation-logger.sh - 由 session-report.js 取代",
+      "task-executor-logger.sh - 由 task-sync.js 取代",
+      "remind-review.sh - 屬於 core skill 提醒機制",
+      "tech-debt-reminder.sh - 屬於全局配置",
+      "stop-save-progress.sh - 屬於全局配置"
+    ]
+  }
+}
