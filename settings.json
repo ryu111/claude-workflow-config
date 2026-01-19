@@ -42,16 +42,6 @@
             "statusMessage": "啟動 LLM Service..."
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"/Users/sbu/.claude/hooks/core/loop-recovery-detector.js\"",
-            "timeout": 5,
-            "statusMessage": "檢測未完成的 Loop..."
-          }
-        ]
       }
     ],
     "SessionEnd": [
@@ -103,15 +93,6 @@
             "type": "command",
             "command": "node \"/Users/sbu/.claude/hooks/core/auto-capture-hook.js\"",
             "timeout": 5
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"/Users/sbu/.claude/hooks/core/workflow-violation-tracker.js\"",
-            "timeout": 2
           }
         ]
       },
