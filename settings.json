@@ -63,52 +63,6 @@
             "timeout": 15
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/sbu/.claude/hooks/workflow/check-archive.sh",
-            "timeout": 3
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/sbu/.claude/hooks/workflow/cleanup-python.sh",
-            "timeout": 2
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/sbu/.claude/hooks/workflow/openspec-cleanup-reminder.sh",
-            "timeout": 3,
-            "statusMessage": "檢查 OpenSpec 和臨時檔案..."
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/sbu/.claude/hooks/workflow/usage-report.sh",
-            "timeout": 3
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/sbu/.claude/hooks/workflow/task-report-generator.sh",
-            "timeout": 3
-          }
-        ]
       }
     ],
     "PreToolUse": [
@@ -118,34 +72,6 @@
             "type": "command",
             "command": "node \"/Users/sbu/.claude/hooks/core/permission-request.js\"",
             "timeout": 5
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"/Users/sbu/.claude/hooks/workflow/workflow-gate.js\"",
-            "timeout": 3
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/sbu/.claude/hooks/workflow/check-core-skill.sh",
-            "timeout": 2
-          },
-          {
-            "type": "command",
-            "command": "/Users/sbu/.claude/hooks/workflow/delegation-logger.sh",
-            "timeout": 1
-          },
-          {
-            "type": "command",
-            "command": "/Users/sbu/.claude/hooks/workflow/task-executor-logger.sh",
-            "timeout": 1
           }
         ]
       }
@@ -164,31 +90,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/sbu/.claude/hooks/workflow/loop-continue-reminder.sh",
+            "command": "/Users/sbu/.claude/hooks/core/loop-continue-reminder.sh",
             "timeout": 2
-          }
-        ]
-      }
-    ],
-    "PreCompact": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/sbu/.claude/hooks/workflow/pre-compact-save.sh",
-            "timeout": 3,
-            "statusMessage": "備份 Loop 狀態..."
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/sbu/.claude/hooks/workflow/stop-save-progress.sh",
-            "timeout": 3
           }
         ]
       }
@@ -207,57 +110,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"/Users/sbu/.claude/hooks/workflow/state-updater.js\"",
-            "timeout": 3
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"/Users/sbu/.claude/hooks/workflow/status-display.js\"",
-            "timeout": 2
-          },
-          {
-            "type": "command",
-            "command": "node \"/Users/sbu/.claude/hooks/workflow/task-sync.js\"",
-            "timeout": 3
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
             "command": "node \"/Users/sbu/.claude/hooks/core/workflow-violation-tracker.js\"",
-            "timeout": 2
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/sbu/.claude/hooks/workflow/loop-heartbeat.sh",
-            "timeout": 1
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/sbu/.claude/hooks/workflow/remind-review.sh",
-            "timeout": 2
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/sbu/.claude/hooks/workflow/tech-debt-reminder.sh",
             "timeout": 2
           }
         ]
@@ -275,17 +128,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"/Users/sbu/.claude/hooks/workflow/completion-enforcer.js\"",
-            "timeout": 3
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"/Users/sbu/.claude/hooks/workflow/session-report.js\"",
-            "timeout": 3
+            "command": "/Users/sbu/.claude/hooks/core/loop-heartbeat.sh",
+            "timeout": 2
           }
         ]
       }
