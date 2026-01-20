@@ -1,20 +1,6 @@
 {
-  "version": "2.0",
-  "changeId": "add-usagi-calculator",
-  "state": "DONE",
-  "previousState": "TESTING",
-  "mainAgentOps": {
-    "directCode": 0,
-    "bypassed": 0,
-    "blocked": 0,
-    "delegated": 6,
-    "directEdits": 56
-  },
+  "state": "IDLE",
   "timestamps": {
-    "created": "2026-01-19T16:00:00Z",
-    "lastActivity": "2026-01-19T19:08:26.028Z",
-    "stateChanged": "2026-01-19T17:30:00.000Z",
-    "workflowStarted": "2026-01-19T16:00:00.000Z"
-  },
-  "metadata": {}
+    "lastActivity": "2026-01-20T06:59:53.491Z"
+  }
 }

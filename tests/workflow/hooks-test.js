@@ -314,7 +314,7 @@ console.log('TEST 5: hooks.json - 配置驗證');
 console.log('========================================\n');
 
 function validateHooksJson() {
-  const hooksPath = path.join(process.env.HOME, '.claude/plugins/workflow/hooks.json');
+  const hooksPath = path.join(process.env.HOME, '.claude/plugins/workflow/hooks/hooks.json');
 
   try {
     const content = fs.readFileSync(hooksPath, 'utf8');
@@ -337,13 +337,19 @@ function validateHooksJson() {
       'task-sync.js',
       'violation-tracker.js',
       'completion-enforcer.js',
-      'parallel-opportunity-detector.js'
+      'parallel-opportunity-detector.js',
+      'status-display.js'
     ];
 
     requiredHooks.forEach(hookName => {
-      const found = postToolUse.some(entry =>
-        entry.hooks && entry.hooks.some(h => h.command && h.command.includes(hookName))
-      );
+      // 支持新舊兩種 hooks.json 格式
+      const found = postToolUse.some(entry => {
+        // 新格式: { script: "xxx.js", ... }
+        if (entry.script === hookName) return true;
+        // 舊格式: { hooks: [{ command: "..." }] }
+        if (entry.hooks && entry.hooks.some(h => h.command && h.command.includes(hookName))) return true;
+        return false;
+      });
       const status = found ? '✅' : '❌';
       console.log(`  ${status} PostToolUse 中包含 "${hookName}"`);
       assert(found, `PostToolUse must include ${hookName}`);

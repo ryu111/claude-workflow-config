@@ -75,15 +75,6 @@
             "timeout": 8
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/sbu/.claude/hooks/core/loop-continue-reminder.sh",
-            "timeout": 2
-          }
-        ]
       }
     ],
     "PostToolUse": [
@@ -93,24 +84,6 @@
             "type": "command",
             "command": "node \"/Users/sbu/.claude/hooks/memory/auto-capture-hook.js\"",
             "timeout": 5
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/sbu/.claude/hooks/core/fix-on-discovery.sh",
-            "timeout": 2
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/sbu/.claude/hooks/core/loop-heartbeat.sh",
-            "timeout": 2
           }
         ]
       }

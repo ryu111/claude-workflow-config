@@ -2,78 +2,78 @@
 
 /**
  * Claude Code PermissionRequest Hook
- * Auto-approves non-destructive MCP tools from all servers
+ * 自動核准非破壞性 MCP 工具
  *
- * This hook intercepts permission requests and automatically approves
- * read-only operations (tools with readOnlyHint or without destructiveHint),
- * eliminating the need for manual user confirmation on safe operations.
+ * 此 Hook 攔截權限請求，自動核准唯讀操作
+ * （具有 readOnlyHint 或沒有 destructiveHint 的工具），
+ * 減少安全操作的手動確認需求。
  *
- * Updated: 2026-01-09 - Configuration loading, pattern matching fixes
- * Created: 2026-01-08
- * Related: MCP Tool Annotations (readOnlyHint, destructiveHint)
+ * 更新：2026-01-09 - 配置載入、模式匹配修正
+ * 建立：2026-01-08
+ * 相關：MCP Tool Annotations (readOnlyHint, destructiveHint)
  */
 
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-// Default destructive patterns (always require confirmation)
+// 預設破壞性模式（總是需要確認）
 const DEFAULT_DESTRUCTIVE_PATTERNS = [
-    'delete',
-    'remove',
-    'destroy',
-    'drop',
-    'clear',
-    'wipe',
-    'purge',
-    'forget',
-    'erase',
-    'reset',
-    'update',  // Can be destructive
-    'modify',
-    'edit',
-    'change',
-    'write',   // Can overwrite
-    'create',  // Can create unwanted resources
-    'deploy',
-    'publish',
-    'execute', // Code execution can be dangerous
-    'run',
-    'eval',
-    'consolidate' // Modifies memories
+    'delete',      // 刪除
+    'remove',      // 移除
+    'destroy',     // 銷毀
+    'drop',        // 丟棄
+    'clear',       // 清除
+    'wipe',        // 抹除
+    'purge',       // 清理
+    'forget',      // 遺忘
+    'erase',       // 擦除
+    'reset',       // 重置
+    'update',      // 更新（可能具破壞性）
+    'modify',      // 修改
+    'edit',        // 編輯
+    'change',      // 變更
+    'write',       // 寫入（可能覆蓋）
+    'create',      // 建立（可能建立不需要的資源）
+    'deploy',      // 部署
+    'publish',     // 發布
+    'execute',     // 執行（程式碼執行可能危險）
+    'run',         // 執行
+    'eval',        // 評估
+    'consolidate'  // 合併（修改記憶）
 ];
 
-// Default safe read-only patterns (can be auto-approved)
+// 預設安全唯讀模式（可自動核准）
 const DEFAULT_SAFE_PATTERNS = [
-    'get',
-    'list',
-    'read',
-    'retrieve',
-    'fetch',
-    'search',
-    'find',
-    'query',
-    'recall',
-    'check',
-    'status',
-    'health',
-    'stats',
-    'analyze',
-    'view',
-    'show',
-    'describe',
-    'inspect',
-    'store',      // Additive only, doesn't delete
-    'remember',   // Additive only
-    'ingest',     // Document ingestion (additive)
-    'rate',       // Rating memories (non-destructive)
-    'proactive',  // Proactive context (read-like)
-    'context',    // Context retrieval
-    'summary',    // Summary retrieval
-    'recommendations' // Recommendations (read-only)
+    'get',            // 取得
+    'list',           // 列出
+    'read',           // 讀取
+    'retrieve',       // 擷取
+    'fetch',          // 獲取
+    'search',         // 搜尋
+    'find',           // 尋找
+    'query',          // 查詢
+    'recall',         // 回憶
+    'check',          // 檢查
+    'status',         // 狀態
+    'health',         // 健康檢查
+    'stats',          // 統計
+    'analyze',        // 分析
+    'view',           // 檢視
+    'show',           // 顯示
+    'describe',       // 描述
+    'inspect',        // 檢查
+    'store',          // 儲存（僅新增，不刪除）
+    'remember',       // 記住（僅新增）
+    'ingest',         // 匯入文件（新增性質）
+    'rate',           // 評分記憶（非破壞性）
+    'proactive',      // 主動式上下文（類似讀取）
+    'context',        // 上下文擷取
+    'summary',        // 摘要擷取
+    'recommendations' // 建議（唯讀）
 ];
 
-// Configuration state (loaded at startup)
+// 配置狀態（啟動時載入）
 let config = {
     enabled: true,
     autoApprove: true,
@@ -83,15 +83,15 @@ let config = {
 };
 
 /**
- * Load configuration from ~/.claude/hooks/config.json
- * Merges custom patterns with built-in defaults
+ * 從 ~/.claude/hooks/config.json 載入配置
+ * 將自訂模式與內建預設合併
  */
 function loadConfiguration() {
     try {
         const configPath = path.join(os.homedir(), '.claude', 'hooks', 'config.json');
 
         if (!fs.existsSync(configPath)) {
-            // No config file, use defaults
+            // 沒有配置檔案，使用預設值
             return;
         }
 
@@ -99,18 +99,18 @@ function loadConfiguration() {
         const fullConfig = JSON.parse(configData);
 
         if (!fullConfig.permissionRequest) {
-            // No permissionRequest section, use defaults
+            // 沒有 permissionRequest 區段，使用預設值
             return;
         }
 
         const hookConfig = fullConfig.permissionRequest;
 
-        // Load flags (with defaults)
+        // 載入旗標（帶預設值）
         config.enabled = hookConfig.enabled !== undefined ? hookConfig.enabled : true;
         config.autoApprove = hookConfig.autoApprove !== undefined ? hookConfig.autoApprove : true;
         config.logDecisions = hookConfig.logDecisions !== undefined ? hookConfig.logDecisions : false;
 
-        // Merge custom patterns with defaults
+        // 將自訂模式與預設合併
         if (hookConfig.customSafePatterns && Array.isArray(hookConfig.customSafePatterns)) {
             config.safePatterns = [...DEFAULT_SAFE_PATTERNS, ...hookConfig.customSafePatterns];
         }
@@ -120,87 +120,87 @@ function loadConfiguration() {
         }
 
         if (config.logDecisions) {
-            console.error('[PermissionRequest] Configuration loaded successfully');
-            console.error(`  - Enabled: ${config.enabled}`);
-            console.error(`  - Auto-approve: ${config.autoApprove}`);
-            console.error(`  - Safe patterns: ${config.safePatterns.length}`);
-            console.error(`  - Destructive patterns: ${config.destructivePatterns.length}`);
+            console.error('[PermissionRequest] 配置載入成功');
+            console.error(`  - 啟用: ${config.enabled}`);
+            console.error(`  - 自動核准: ${config.autoApprove}`);
+            console.error(`  - 安全模式數: ${config.safePatterns.length}`);
+            console.error(`  - 破壞性模式數: ${config.destructivePatterns.length}`);
         }
 
     } catch (error) {
-        // On error, fall back to defaults
-        console.error(`[PermissionRequest] Failed to load config: ${error.message}`);
-        console.error('[PermissionRequest] Using default patterns');
+        // 發生錯誤時，回退到預設值
+        console.error(`[PermissionRequest] 載入配置失敗: ${error.message}`);
+        console.error('[PermissionRequest] 使用預設模式');
     }
 }
 
-// Load configuration at module initialization
+// 模組初始化時載入配置
 loadConfiguration();
 
 /**
- * Main hook entry point
- * Receives JSON via stdin, processes permission request, returns decision
+ * Hook 主進入點
+ * 透過 stdin 接收 JSON，處理權限請求，回傳決定
  */
 async function main() {
     try {
-        // Check if hook is enabled
+        // 檢查 Hook 是否啟用
         if (!config.enabled) {
             if (config.logDecisions) {
-                console.error('[PermissionRequest] Hook disabled, prompting user');
+                console.error('[PermissionRequest] Hook 已停用，提示用戶');
             }
             outputDecision('prompt');
             return;
         }
 
-        // Read stdin input
+        // 讀取 stdin 輸入
         const input = await readStdin();
         const payload = JSON.parse(input);
 
-        // Check if this is an MCP tool call
+        // 檢查是否為 MCP 工具呼叫
         if (isMCPToolCall(payload)) {
             const toolName = extractToolName(payload);
 
-            // Check if auto-approve is disabled
+            // 檢查自動核准是否停用
             if (!config.autoApprove) {
                 if (config.logDecisions) {
-                    console.error('[PermissionRequest] Auto-approve disabled, prompting user');
+                    console.error('[PermissionRequest] 自動核准已停用，提示用戶');
                 }
                 outputDecision('prompt');
                 return;
             }
 
-            // Check if tool is safe (non-destructive)
+            // 檢查工具是否安全（非破壞性）
             if (isSafeTool(toolName)) {
-                // Auto-approve safe tools
+                // 自動核准安全工具
                 if (config.logDecisions) {
-                    console.error(`[PermissionRequest] Auto-approved: ${toolName}`);
+                    console.error(`[PermissionRequest] 自動核准: ${toolName}`);
                 }
                 outputDecision('allow', {
-                    reason: `Auto-approved safe tool: ${toolName}`,
+                    reason: `自動核准安全工具: ${toolName}`,
                     auto_approved: true,
                     server: payload.server_name,
                     tool_name: toolName
                 });
             } else {
-                // Require confirmation for potentially destructive tools
+                // 潛在破壞性工具需要確認
                 if (config.logDecisions) {
-                    console.error(`[PermissionRequest] Prompting for: ${toolName}`);
+                    console.error(`[PermissionRequest] 提示確認: ${toolName}`);
                 }
                 outputDecision('prompt');
             }
         } else {
-            // Not an MCP tool call, show normal dialog
+            // 非 MCP 工具呼叫，顯示一般對話框
             outputDecision('prompt');
         }
     } catch (error) {
-        // On error, fall back to prompting user
-        console.error('[PermissionRequest Hook] Error:', error.message);
+        // 發生錯誤時，回退到提示用戶
+        console.error('[PermissionRequest Hook] 錯誤:', error.message);
         outputDecision('prompt');
     }
 }
 
 /**
- * Check if the payload represents an MCP tool call
+ * 檢查 payload 是否為 MCP 工具呼叫
  */
 function isMCPToolCall(payload) {
     return payload && (
@@ -211,28 +211,28 @@ function isMCPToolCall(payload) {
 }
 
 /**
- * Extract clean tool name from payload (strip mcp__ prefix)
- * Preserves case for camelCase detection in isSafeTool()
+ * 從 payload 提取乾淨的工具名稱（移除 mcp__ 前綴）
+ * 保留大小寫以供 isSafeTool() 中的 camelCase 偵測
  */
 function extractToolName(payload) {
     let toolName = payload.tool_name || '';
 
-    // Strip mcp__servername__ prefix if present
-    // Examples: mcp__memory__retrieve_memory -> retrieve_memory
-    //           mcp__shodh-cloudflare__recall -> recall
-    //           mcp__my_custom_server__get_data -> get_data
-    // Use non-greedy match to handle server names with underscores
+    // 移除 mcp__servername__ 前綴（如果存在）
+    // 範例：mcp__memory__retrieve_memory -> retrieve_memory
+    //       mcp__shodh-cloudflare__recall -> recall
+    //       mcp__my_custom_server__get_data -> get_data
+    // 使用非貪婪匹配處理包含底線的伺服器名稱
     const mcpPrefix = /^mcp__.+?__/;
     toolName = toolName.replace(mcpPrefix, '');
 
-    return toolName; // Preserve case for camelCase detection
+    return toolName; // 保留大小寫以供 camelCase 偵測
 }
 
 /**
- * Check if the tool is safe (non-destructive) based on naming patterns
- * Uses word boundary regex to prevent false matches
- * Handles underscores, hyphens, and camelCase as word separators
- * Examples:
+ * 根據命名模式檢查工具是否安全（非破壞性）
+ * 使用字詞邊界正則防止誤匹配
+ * 處理底線、連字號和 camelCase 作為字詞分隔符
+ * 範例：
  *   - "get_updated_records" → ["get", "updated", "records"]
  *   - "statusCheck" → ["status", "check"]
  *   - "GetData" → ["get", "data"]
@@ -242,43 +242,43 @@ function isSafeTool(toolName) {
         return false;
     }
 
-    // Split tool name by underscores, hyphens, and camelCase boundaries
-    // First insert separators before capital letters, then split
+    // 依底線、連字號和 camelCase 邊界分割工具名稱
+    // 先在大寫字母前插入分隔符，再分割
     const withSeparators = toolName.replace(/([a-z])([A-Z])/g, '$1_$2');
     const parts = withSeparators.toLowerCase().split(/[_-]/);
 
-    // First check: Does any part match a destructive pattern exactly?
+    // 第一次檢查：是否有任何部分完全匹配破壞性模式？
     for (const pattern of config.destructivePatterns) {
         if (parts.includes(pattern)) {
-            return false; // Destructive - require confirmation
+            return false; // 破壞性 - 需要確認
         }
     }
 
-    // Second check: Does any part match a safe pattern exactly?
+    // 第二次檢查：是否有任何部分完全匹配安全模式？
     for (const pattern of config.safePatterns) {
         if (parts.includes(pattern)) {
-            return true; // Safe - auto-approve
+            return true; // 安全 - 自動核准
         }
     }
 
-    // Unknown pattern - require confirmation (safer default)
+    // 未知模式 - 需要確認（較安全的預設值）
     return false;
 }
 
 /**
- * Output the decision in Claude Code hook format
+ * 以 Claude Code Hook 格式輸出決定
  */
 function outputDecision(behavior, metadata = {}) {
     const decision = {
         hookSpecificOutput: {
             hookEventName: 'PermissionRequest',
             decision: {
-                behavior: behavior  // 'allow', 'deny', or 'prompt'
+                behavior: behavior  // 'allow'、'deny' 或 'prompt'
             }
         }
     };
 
-    // Add metadata if provided (for logging/debugging)
+    // 如有提供 metadata 則加入（用於記錄/除錯）
     if (Object.keys(metadata).length > 0 && behavior !== 'prompt') {
         decision.hookSpecificOutput.metadata = metadata;
     }
@@ -287,7 +287,7 @@ function outputDecision(behavior, metadata = {}) {
 }
 
 /**
- * Read all data from stdin
+ * 從 stdin 讀取所有資料
  */
 function readStdin() {
     return new Promise((resolve, reject) => {
@@ -310,18 +310,18 @@ function readStdin() {
             reject(error);
         });
 
-        // Timeout after 1 second
+        // 1 秒後逾時
         setTimeout(() => {
             if (data.length === 0) {
-                reject(new Error('Timeout reading stdin'));
+                reject(new Error('讀取 stdin 逾時'));
             }
         }, 1000);
     });
 }
 
-// Run main
+// 執行主函數
 main().catch(error => {
-    console.error('[PermissionRequest Hook] Fatal error:', error);
+    console.error('[PermissionRequest Hook] 致命錯誤:', error);
     outputDecision('prompt');
     process.exit(1);
 });
