@@ -8,6 +8,8 @@ const http = require('http');
 const { MCPClient } = require('./mcp-client');
 
 class MemoryClient {
+    static CLIENT_ID = 'claude-code-memory-client';
+
     constructor(config) {
         this.config = config;
         this.protocol = config.protocol || 'auto';
@@ -241,7 +243,62 @@ class MemoryClient {
     }
 
     /**
-     * Private helper: Perform HTTP POST request to API
+     * Private helper: Perform raw HTTP POST request to API (returns raw JSON response)
+     * @private
+     * @param {string} path - API endpoint path
+     * @param {object} payload - Request payload
+     * @param {object} options - Additional options (timeout)
+     * @returns {Promise<object>} Raw JSON response from API
+     */
+    _performRawApiPost(path, payload, options = {}) {
+        return new Promise((resolve) => {
+            const url = new URL(path, this.httpConfig.endpoint);
+            const postData = JSON.stringify(payload);
+
+            const reqOptions = {
+                hostname: url.hostname,
+                port: url.port || (url.protocol === 'https:' ? 8443 : 8889),
+                path: url.pathname,
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(postData),
+                    'X-API-Key': this.httpConfig.apiKey
+                },
+                timeout: options.timeout || this.httpConfig.defaultTimeout || 30000,
+                rejectUnauthorized: false
+            };
+
+            const protocol = url.protocol === 'https:' ? https : http;
+            const req = protocol.request(reqOptions, (res) => {
+                let data = '';
+                res.on('data', (chunk) => data += chunk);
+                res.on('end', () => {
+                    try {
+                        const response = JSON.parse(data);
+                        resolve(response);
+                    } catch (parseError) {
+                        resolve({ success: false, error: 'Parse error', data });
+                    }
+                });
+            });
+
+            req.on('error', (error) => {
+                resolve({ success: false, error: error.message });
+            });
+
+            req.on('timeout', () => {
+                req.destroy();
+                resolve({ success: false, error: 'Request timed out' });
+            });
+
+            req.write(postData);
+            req.end();
+        });
+    }
+
+    /**
+     * Private helper: Perform HTTP POST request to API (for memory queries)
      * @private
      */
     _performApiPost(path, payload) {
@@ -418,6 +475,70 @@ class MemoryClient {
         } else {
             throw new Error('No active connection available');
         }
+    }
+
+    /**
+     * Store a memory to the memory service
+     * @param {string} content - Memory content
+     * @param {Array<string>} tags - Tags to categorize the memory
+     * @param {object} metadata - Additional metadata
+     * @param {string} memoryType - Type of memory (default: 'note')
+     */
+    async storeMemory(content, tags = [], metadata = {}, memoryType = 'note') {
+        if (this.activeProtocol === 'mcp' && this.mcpClient) {
+            // MCP store not yet implemented, fall through to HTTP
+            console.warn('[Memory Client] MCP store not implemented, using HTTP');
+        }
+
+        if (this.activeProtocol === 'http' || this.httpAvailable) {
+            return this.storeMemoryHTTP(content, tags, metadata, memoryType);
+        }
+
+        throw new Error('No active connection available for storing');
+    }
+
+    /**
+     * Store memory via HTTP REST API
+     * @private
+     */
+    async storeMemoryHTTP(content, tags, metadata, memoryType) {
+        return this._performRawApiPost('/api/memories', {
+            content: content,
+            tags: tags.filter(Boolean),
+            memory_type: memoryType,
+            metadata: {
+                ...metadata,
+                generated_by: MemoryClient.CLIENT_ID,
+                generated_at: new Date().toISOString()
+            }
+        });
+    }
+
+    /**
+     * Trigger quality evaluation for a stored memory
+     * @param {string} contentHash - Hash of the memory to evaluate
+     */
+    async triggerQualityEvaluation(contentHash) {
+        if (this.activeProtocol === 'http' || this.httpAvailable) {
+            return this.triggerQualityEvaluationHTTP(contentHash);
+        }
+
+        // For MCP, quality evaluation is handled server-side
+        return { success: true, note: 'MCP handles quality evaluation server-side' };
+    }
+
+    /**
+     * Trigger quality evaluation via HTTP REST API
+     * @private
+     * @returns {Promise<{success: boolean, quality_score?: number, quality_provider?: string, error?: string}>}
+     */
+    async triggerQualityEvaluationHTTP(contentHash) {
+        const timeout = this.httpConfig.qualityEvaluationTimeout || 10000;
+        return this._performRawApiPost(
+            `/api/quality/memories/${contentHash}/evaluate`,
+            {},
+            { timeout }
+        );
     }
 
     /**

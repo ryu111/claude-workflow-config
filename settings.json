@@ -10,7 +10,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"/Users/sbu/.claude/hooks/core/session-start.js\"",
+            "command": "node \"/Users/sbu/.claude/hooks/memory/session-lifecycle.js\" start",
             "timeout": 10
           }
         ]
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"/Users/sbu/.claude/hooks/core/session-start-cleanup.js\"",
+            "command": "node \"/Users/sbu/.claude/hooks/utilities/session-start-cleanup.js\"",
             "timeout": 5,
             "statusMessage": "清理重複實例..."
           }
@@ -49,7 +49,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"/Users/sbu/.claude/hooks/core/session-end.js\"",
+            "command": "node \"/Users/sbu/.claude/hooks/memory/session-lifecycle.js\" end",
             "timeout": 15
           }
         ]
@@ -71,7 +71,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"/Users/sbu/.claude/hooks/core/mid-conversation.js\"",
+            "command": "node \"/Users/sbu/.claude/hooks/memory/mid-conversation.js\"",
             "timeout": 8
           }
         ]
@@ -91,7 +91,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"/Users/sbu/.claude/hooks/core/auto-capture-hook.js\"",
+            "command": "node \"/Users/sbu/.claude/hooks/memory/auto-capture-hook.js\"",
             "timeout": 5
           }
         ]
