@@ -401,12 +401,22 @@ steering/
 2. ✅ 加入「Reflect」自我反思階段
 3. ✅ 更新輸出格式，包含反思結果
 4. ✅ 更新 skill 引用（ui → design）
+5. ✅ 修改 REVIEWER agent，加入「輸入預期」（參考自我反思結果）
+6. ✅ 修改 TESTER agent，加入「輸入預期」（參考測試建議）+ 修正 browser 路徑
 
 **Plan-Act-Reflect 流程**：
 ```
 Sense → Plan → Act → Verify → Reflect → Output
   ↓       ↓      ↓      ↓        ↓        ↓
 理解    規劃   實作   驗證     反思     摘要
+```
+
+**D→R→T 整合**：
+```
+DEVELOPER (含 Reflect) → REVIEWER → TESTER
+     自我反思              參考結果    參考建議
+     ↓                    獨立審查    回歸優先
+     輸出摘要
 ```
 
 **Reflect 檢查清單**：
