@@ -362,7 +362,8 @@ steering/
 - [x] Steering Documents 建立 ✅ 已完成
 - [x] CLAUDE.md 精簡（112 → 69 行）✅ 已完成
 - [ ] Skills 精簡（14 個待處理）
-- [ ] 推送到 GitHub
+- [x] 推送到 GitHub ✅
+- [x] 建立 PR: https://github.com/ryu111/claude-workflow-config/pull/2 ✅
 - [ ] Plan-Act-Reflect 實作
 - [ ] 零配置部署腳本
 
