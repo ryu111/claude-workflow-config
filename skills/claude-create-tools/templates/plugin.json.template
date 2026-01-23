@@ -1,0 +1,18 @@
+{
+  "name": "{{plugin-name}}",
+  "version": "1.0.0",
+  "description": "{{description}}",
+  "author": {
+    "name": "{{author-name}}",
+    "email": "{{author-email}}"
+  },
+  "homepage": "{{homepage-url}}",
+  "repository": "{{repo-url}}",
+  "license": "MIT",
+  "keywords": ["{{keyword1}}", "{{keyword2}}"],
+  "commands": "./commands/",
+  "agents": "./agents/",
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": "./.mcp.json"
+}

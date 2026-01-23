@@ -1,0 +1,49 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "{{tool-pattern}}",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{script-path}}",
+            "timeout": 60000
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "{{tool-pattern}}",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{script-path}}",
+            "timeout": 30000
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{startup-script-path}}"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "{{verification-prompt}}"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,4 +1,6 @@
 # Sensitive/Runtime files
+.DS_Store
+.claude/
 history.jsonl
 projects/
 debug/

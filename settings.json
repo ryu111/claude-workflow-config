@@ -7,6 +7,16 @@
   "hooks": {
     "SessionStart": [
       {
+        "description": "[workflow] 顯示 Workflow Plugin 載入狀態",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/plugin-status-display.js\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "hooks": [
           {
             "type": "command",
@@ -42,6 +52,16 @@
             "statusMessage": "啟動 LLM Service..."
           }
         ]
+      },
+      {
+        "description": "[workflow] 檢測未完成的 Loop 並提示恢復",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/loop-recovery-detector.js\"",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "SessionEnd": [
@@ -53,6 +73,16 @@
             "timeout": 15
           }
         ]
+      },
+      {
+        "description": "[workflow] 生成委派統計報告",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/session-report.js\"",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PreToolUse": [
@@ -61,6 +91,39 @@
           {
             "type": "command",
             "command": "node \"/Users/sbu/.claude/hooks/core/permission-request.js\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "description": "[workflow] 顯示 Agent 開始訊息（大字格式）",
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/agent-start-display.js\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "description": "[workflow] 核心狀態機驗證（阻擋非法轉換、D→R→T 強制）",
+        "matcher": "Edit|Write|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/workflow-gate.js\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "description": "[workflow] 檢測並行意圖，阻擋單一 Task 呼叫",
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/parallel-opportunity-detector.js\" preToolUse",
             "timeout": 5
           }
         ]
@@ -75,6 +138,26 @@
             "timeout": 8
           }
         ]
+      },
+      {
+        "description": "[workflow] 偵測用戶意圖（UI/PARALLEL/PLANNING），自動調整並行數",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/prompt-router.js\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "description": "[workflow] 插話提醒與 Loop 繼續提示",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/loop-manager.js\" userPrompt",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -84,6 +167,119 @@
             "type": "command",
             "command": "node \"/Users/sbu/.claude/hooks/memory/auto-capture-hook.js\"",
             "timeout": 5
+          }
+        ]
+      },
+      {
+        "description": "[workflow] 更新工作流狀態，發送系統通知",
+        "matcher": "Edit|Write|Task|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/state-updater.js\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "description": "[workflow] tasks.md ↔ TodoWrite 雙向同步",
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/task-sync.js\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "description": "[workflow] 顯示 Agent 完成訊息",
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/status-display.js\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "description": "[workflow] 追蹤 D→R→T 違規，記錄 JSONL 日誌",
+        "matcher": "Edit|Write|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/violation-tracker.js\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "description": "[workflow] 自動執行收尾動作（git commit/archive/open）",
+        "matcher": "Bash|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/completion-enforcer.js\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "description": "[workflow] 檢測並行機會提醒",
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/parallel-opportunity-detector.js\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "description": "[workflow] 心跳更新、Fix-on-Discovery",
+        "matcher": "Edit|Write|Bash|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/loop-manager.js\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "description": "[workflow] 驗證 Sub-Agent 輸出（敏感資訊、明確 verdict）",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/subagent-validator.js\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "description": "[workflow] 阻擋未完成的 D→R→T 流程",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/drt-completion-checker.js\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "description": "[workflow] 檢查 tasks.md 是否全部完成",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/Users/sbu/.claude/plugins/workflow/hooks/openspec-complete-detector.js\"",
+            "timeout": 10
           }
         ]
       }
